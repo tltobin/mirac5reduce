@@ -7,21 +7,21 @@ from math import ceil
 ################## Functions ####################
 
 
-def lm_mean_frame( fitslist, ext = None, maxframes = 200, logfile = None ):
+def lm_mean_frame( filenames, ext = None, maxframes = 200, logfile = None ):
     """
     Calculates the mean frame of data read in from one or more fits files in such a way that prevents all of
     the input frames from being loaded into the memory simultaneously.
     
     To combine 2D frames located in a known extension of multiple files, provide the list of file names as
-    fitslist and the fits extension where the desired arrays are stored in each file as ext.
+    filenames and the fits extension where the desired arrays are stored in each file as ext.
     
     To combine 2D frames located in different extensions of a single fits file, provide the name of that
-    fits file as a single string as fitslist and set ext to None. (Extensions that have no data associated
+    fits file as a single string as filenames and set ext to None. (Extensions that have no data associated
     with them will be ignored.)
     
     Required Parameters
     -------------------
-            fitslist    String or List of Strings
+            filenames    String or List of Strings
             
                             The file name(s) (with paths) where the data arrays to be combined are stored.
                             
@@ -38,8 +38,8 @@ def lm_mean_frame( fitslist, ext = None, maxframes = 200, logfile = None ):
             
                             [ Default = None ]
                             
-                            The extension in each fits file specified in fitslist where the data frames to be
-                            combined are stored. Is only used if multiple files are indicated by fitslist.
+                            The extension in each fits file specified in filenames where the data frames to be
+                            combined are stored. Is only used if multiple files are indicated by filenames.
                             
             maxframes   Int
                             
@@ -68,22 +68,22 @@ def lm_mean_frame( fitslist, ext = None, maxframes = 200, logfile = None ):
     #   If 0, frames are in different extensions of the same file.
     sepfiles = 1
     
-    # Sets switch to 0 if single file provided. If fitslist provided as string, changes to list.
-    if isinstance(fitslist, list) and len(fitslist)==1:
+    # Sets switch to 0 if single file provided. If filenames provided as string, changes to list.
+    if isinstance(filenames, list) and len(filenames)==1:
         sepfiles = 0
-    if isinstance( fitslist, str):
+    if isinstance( filenames, str):
         sepfiles = 0
-        fitslist = [ fitslist, ]
+        filenames = [ filenames, ]
         
     # Retrieves the shape of a single 2D frame
-    with fits.open( fitslist[0], mode='readonly' ) as hdulist:
+    with fits.open( filenames[0], mode='readonly' ) as hdulist:
         
         # If each frame in its own file, just looks at the indicated extension
         #   While we're in the if statement, also saves total number of frames to be combined and generates
         #   extlist that is just the extension index for each file (all the same)
         if sepfiles == 1:
             ext0 = ext
-            totframes = len( fitslist )
+            totframes = len( filenames )
             extlist = [ ext, ] * totframes
         
         # If frames are stored in different extensions of this file, gets a list of extension indices within
@@ -93,8 +93,8 @@ def lm_mean_frame( fitslist, ext = None, maxframes = 200, logfile = None ):
             ext0 = extlist[0]
             totframes = len( extlist )
             
-            # While here, makes fitslist a list of the same file name with the same length as the extlist
-            fitslist = [ fitslist[0], ] * len(extlist)
+            # While here, makes filenames a list of the same file name with the same length as the extlist
+            filenames = [ filenames[0], ] * len(extlist)
             
         # Retrieves the shape of the 2D data in that extension
         frame_shape = hdulist[ext0].data.shape
@@ -140,7 +140,7 @@ def lm_mean_frame( fitslist, ext = None, maxframes = 200, logfile = None ):
         else:
             print('.', end='')
         
-        # Determines the indices of the files in fitslist that will be read in for that chunk of frames
+        # Determines the indices of the files in filenames that will be read in for that chunk of frames
         file_idx_str = i * maxframes
         file_idx_end = file_idx_str + nframes_in_chunk
         

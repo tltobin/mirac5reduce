@@ -29,11 +29,11 @@ long_description = read("README.md")
 
 # Actual package setup
 setup(
-    name="mirac5_reduction",
+    name="mirac5reduce",
     version=get_version("VERSION"),
     description="Data Reduction for the MIRAC-5 Instrument",
     long_description=long_description,
-    url="https://github.com/tltobin/mirac5_reduction",
+    url="https://github.com/tltobin/mirac5reduce",
     
     # Project URLS - set these up when URLS are set up
     # project_urls={
@@ -46,8 +46,8 @@ setup(
     # Author email - decide which email to distribute
     # author_email="distutils-sig@python.org",
     
-    package_dir={'': 'src'},
-    # packages= [ '' ],
+    packages = [ 'mirac5reduce' ],
+    package_dir={'': 'src', },
     # find_packages( where="prism" ),
     
     # Use these lines to prevent installation without specific versions of python & required subpackages
