@@ -1,0 +1,68 @@
+##############################################################################################################
+## Initialization file used to edit parameters for mirac5-reduction routines
+##
+## Instructions: Copy and edit this file to customize your reduction run. Then provide the path and name 
+##               of your updated parameter file to the functions that you wish to run.
+##
+## This config file has three sections:
+##      
+##      [REDUCTION]         Contains parameters used by reduction and analysis/visualization scripts.
+##                          Some parameters are used by both these and config scripts.
+##                          May change from one reduction to another.
+##
+##      [CALIB]             Contains parameters that are only ever used for calibration scripts.
+##                          May change when calculating new calibration files.
+##
+##      [DATA_ARCH]         Contains parameters related to data architecture, or general file format.
+##                          May change occasionally in early stages of instrument development, but should
+##                              not vary significantly over the course of a run.
+##
+##############################################################################################################
+## This section includes parameters that are specific to your data reduction and must be updated.
+[REDUCTION]
+
+# Path indicating where the raw observation fits files from the telescope are stored.
+raw_data_path = ''
+
+# Path indicating where the output files created by reduction and analysis scripts should be saved
+reduce_outpath = ''
+
+# Start and end file numbers (inclusive) indicating the range of *observation* files for this reduction
+raw_data_startno = 
+raw_data_endno   = 
+
+
+
+
+
+##############################################################################################################
+## This section is includes parameters that are only used by config scripts.
+[CALIB]
+
+# Path indicating where the raw dark/flat fits files from the telescope are stored.
+raw_cals_path = ''
+
+# Path where the output files created by the calibration scripts should be saved 
+#   (includes bad pixel mask and any master dark/flat frames)
+calib_outpath = ''
+
+# Start and end file numbers (inclusive) indicating the range of DARK files for this reduction
+raw_dark_startno = 
+raw_dark_endno   = 
+
+# Start and end file numbers (inclusive) indicating the range of FLAT files for this reduction
+raw_flat_startno = 
+raw_flat_endno   = 
+
+
+
+
+
+##############################################################################################################
+## This section is restricted to parameters that govern the architecture of the raw data created by mirac-5.
+## They will need to be set initially in testing, but will not need to be updated from run to run.
+[DATA_ARCH]
+
+# Extension of the raw FITS file in which the frame data is stored
+data_ext = 0
+
