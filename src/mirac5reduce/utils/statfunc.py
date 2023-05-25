@@ -25,44 +25,45 @@ def medabsdev(data, axis=None, keepdims=False, nan=True):
     Required Parameters
     -------------------
     
-            data        NumPy array
+            data            NumPy array
             
-                            The input data.
+                                The input data.
                             
     Optional Parameters
     -------------------
     
-            axis        Int, tuple of ints, or None
+            axis            Int, tuple of ints, or None
             
-                            [ Default = None ]
+                                [ Default = None ]
                             
-                            Axis or axes along which the deviation is computed. The default is to compute the 
-                            deviation of the flattened array.
+                                Axis or axes along which the deviation is computed. The default is to compute 
+                                the deviation of the flattened array.
         
-                            If this is a tuple of ints, a standard deviation is performed over  multiple axes, 
-                            instead of a single axis or all the axes as before. This is the equivalent of 
-                            reshaping the input data and then taking the standard deviation.
+                                If this is a tuple of ints, a standard deviation is performed over  multiple 
+                                axes, instead of a single axis or all the axes as before. This is the 
+                                equivalent of reshaping the input data and then taking the standard deviation.
                             
-            keepdims    Bool
+            keepdims        Bool
                             
-                            [ Default = False ]
+                                [ Default = False ]
                             
-                            If this is set to True, the axes which are reduced are left in the result as 
-                            dimensions with size one. With this option, the result will broadcast correctly 
-                            against the original `arr`.
-                            
-            nan         Bool
+                                If this is set to True, the axes which are reduced are left in the result as 
+                                dimensions with size one. With this option, the result will broadcast 
+                                correctly against the original `arr`.
+                                
+            nan             Bool
             
-                            [ Default = True ]
+                                [ Default = True ]
                             
-                            Ignore NaNs? Default is True.
+                                Ignore NaNs? Default is True.
                             
     Returns
     -------
     
-            sigma       NumPy Array or Float
+            sigma           NumPy Array or Float
                             
-                            The value(s) of the median absolute deviation calculated along the desired axes
+                                The value(s) of the median absolute deviation calculated along the desired 
+                                axes
                             
     """
     medfunc = np.nanmedian if nan else np.median

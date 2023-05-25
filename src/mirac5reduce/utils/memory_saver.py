@@ -21,47 +21,50 @@ def lm_mean_frame( filenames, ext = None, maxframes = 200, logfile = None ):
     
     Required Parameters
     -------------------
-            filenames    String or List of Strings
+    
+            filenames       String or List of Strings
             
-                            The file name(s) (with paths) where the data arrays to be combined are stored.
+                                The file name(s) (with paths) where the data arrays to be combined are stored.
                             
-                            If a single string is provided, assumes frames are stored in separate extensions
-                            of that single indicated fits file.
+                                If a single string is provided, assumes frames are stored in separate 
+                                extensions of that single indicated fits file.
                             
-                            If a list of strings is provided, assumes frames are stored in the extension 
-                            specified by ext for all fits files specified.
+                                If a list of strings is provided, assumes frames are stored in the extension 
+                                specified by ext for all fits files specified.
     
     Optional Parameters
     -------------------
     
-            ext         Int or None
+            ext             Int or None
             
-                            [ Default = None ]
+                                [ Default = None ]
                             
-                            The extension in each fits file specified in filenames where the data frames to be
-                            combined are stored. Is only used if multiple files are indicated by filenames.
+                                The extension in each fits file specified in filenames where the data frames 
+                                to be combined are stored. Is only used if multiple files are indicated by 
+                                filenames.
                             
-            maxframes   Int
+            maxframes       Int
                             
-                            [ Default = 200 ]
+                                [ Default = 200 ]
                             
-                            The maximum number of input 2D frames that are allowed to be loaded into memory
-                            at any given time. Keep in mind that an additional 2D frame of the same size with
-                            the combined results will also be present in memory.
+                                The maximum number of input 2D frames that are allowed to be loaded into 
+                                memory at any given time. Keep in mind that an additional 2D frame of the same 
+                                size with the combined results will also be present in memory.
                             
-            logfile     String or None
+            logfile         String or None
                             
-                            [ Default = None ]
+                                [ Default = None ]
                             
-                            File name (and path) of a log file in which to provide feedback on the function's
-                            progress. If not provided, progress will be printed to the terminal.
+                                File name (and path) of a log file in which to provide feedback on the 
+                                function's progress. If not provided, progress will be printed to the 
+                                terminal.
                             
     Returns
     -------
     
-            avgframe    2D NumPy Array
+            avgframe        2D NumPy Array
                             
-                            The mean frame calculated from the provided input frames.
+                                The mean frame calculated from the provided input frames.
     """
     
     # Initializes bool switch to say how frames were provided. If 1, frames are each in separate files.

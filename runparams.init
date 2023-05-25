@@ -4,7 +4,7 @@
 ## Instructions: Copy and edit this file to customize your reduction run. Then provide the path and name 
 ##               of your updated parameter file to the functions that you wish to run.
 ##
-## This config file has three sections:
+## This config file has four sections:
 ##      
 ##      [REDUCTION]         Contains parameters used by reduction and analysis/visualization scripts.
 ##                          Some parameters are used by both these and config scripts.
@@ -12,6 +12,9 @@
 ##
 ##      [CALIB]             Contains parameters that are only ever used for calibration scripts.
 ##                          May change when calculating new calibration files.
+##
+##      [COMPUTING]         Contains parameters that are related to the computer that you're running the
+##                          reduction on. Will only need to be updated when you change machines.
 ##
 ##      [DATA_ARCH]         Contains parameters related to data architecture, or general file format.
 ##                          May change occasionally in early stages of instrument development, but should
@@ -58,6 +61,21 @@ raw_flat_endno   =
 
 
 
+
+##############################################################################################################
+## This section is includes parameters that are related to the computer that you are running the reduction on.
+## Used to implement memory use restrictions, if necessary.
+[COMPUTING]
+
+# Boolean switch to indicate whether to implement memory-saving measures when possible (True) or not (False)
+save_mem = False
+
+# The maximum number of full image frames that can be simultaneously saved in memory by routines that have 
+#   memory-saving capabilities. Used only if save_mem is set to True. 
+max_frames_inmem = None
+
+
+
 ##############################################################################################################
 ## This section is restricted to parameters that govern the architecture of the raw data created by mirac-5.
 ## They will need to be set initially in testing, but will not need to be updated from run to run.
@@ -65,4 +83,9 @@ raw_flat_endno   =
 
 # Extension of the raw FITS file in which the frame data is stored
 data_ext = 0
+
+# Naming convention used for the raw fits files created by MIRAC5. Should be formatted such that the file
+#   number, that changes from file to file, is represented by a '*'.
+#   Eg. if file names are like 'gsnapImg201.fits', this should be set to 'gsnapImg*.fits'
+raw_name_fmt = 'gsnapImg*.fits'
 
