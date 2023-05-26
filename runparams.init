@@ -8,10 +8,12 @@
 ##      
 ##      [REDUCTION]         Contains parameters used by reduction and analysis/visualization scripts.
 ##                          Some parameters are used by both these and config scripts.
-##                          May change from one reduction to another.
+##                          May change from one reduction to another, but will often be able to be overwritten
+##                          by handing values directly to a function in the upper-level routines.
 ##
 ##      [CALIB]             Contains parameters that are only ever used for calibration scripts.
-##                          May change when calculating new calibration files.
+##                          May change when calculating new calibration files, but will often be able to be 
+##                          overwritten by handing values directly to a function in the upper-level routines.
 ##
 ##      [COMPUTING]         Contains parameters that are related to the computer that you're running the
 ##                          reduction on. Will only need to be updated when you change machines.
@@ -57,10 +59,9 @@ raw_dark_endno   =
 raw_flat_startno = 
 raw_flat_endno   = 
 
-
-
-
-
+# Threshold (in units of M.A.D.) used for determining bad pixels. Pixels with mean dark values more than 
+#   bp_threshold x the M.A.D. away from the median pixel value will be flagged.
+bp_threshold = 7
 
 ##############################################################################################################
 ## This section is includes parameters that are related to the computer that you are running the reduction on.

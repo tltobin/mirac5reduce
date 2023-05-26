@@ -265,7 +265,7 @@ def meanframe( config, frametype,
     # Uses write_mean_frame function to save the calculated data to the desired fits file
     write_mean_frame( outfile, avgframe, frametype, filelist, raw_filepath = datapath )
     
-    
+
     
     
     
