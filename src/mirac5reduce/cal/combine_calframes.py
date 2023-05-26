@@ -5,7 +5,7 @@ import numpy as np
 import configparser
 
 from ..utils.utils import get_raw_filenames, write_mean_frame
-from ..utils.memory_saver import lm_mean_frame
+from ..utils.memory_saver import calc_mean_frame
 
 ################## Functions ####################
 
@@ -134,10 +134,10 @@ def combine_darks( config, logfile = None, debug = False ):
     
     # Splits here to calculate average frame from data files in memory saving mode or directly
     if save_mem:
-        avgframe = lm_mean_frame( [ os.path.join( raw_cals_path, fname ) for fname in filelist ], 
+        avgframe = calc_mean_frame( [ os.path.join( raw_cals_path, fname ) for fname in filelist ], 
                                   ext = data_ext, maxframes = max_frames_inmem, logfile = logfile )
     else:
-        avgframe = lm_mean_frame( [ os.path.join( raw_cals_path, fname ) for fname in filelist ], 
+        avgframe = calc_mean_frame( [ os.path.join( raw_cals_path, fname ) for fname in filelist ], 
                                   ext = data_ext, maxframes = None, logfile = logfile )
     
     

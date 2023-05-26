@@ -7,10 +7,9 @@ from math import ceil
 ################## Functions ####################
 
 
-def lm_mean_frame( filenames, ext = None, maxframes = 200, logfile = None ):
+def calc_mean_frame( filenames, ext = None, maxframes = 200, logfile = None ):
     """
-    Calculates the mean frame of data read in from one or more fits files in such a way that prevents all of
-    the input frames from being loaded into the memory simultaneously.
+    Calculates the mean frame of data read in from one or more fits files.
     
     To combine 2D frames located in a known extension of multiple files, provide the list of file names as
     filenames and the fits extension where the desired arrays are stored in each file as ext.
@@ -18,6 +17,9 @@ def lm_mean_frame( filenames, ext = None, maxframes = 200, logfile = None ):
     To combine 2D frames located in different extensions of a single fits file, provide the name of that
     fits file as a single string as filenames and set ext to None. (Extensions that have no data associated
     with them will be ignored.)
+    
+    Has optional memory-saving capabilities, to place limits on the number of frames that can be loaded into
+    memory simultaneously.
     
     Required Parameters
     -------------------
@@ -121,7 +123,7 @@ def lm_mean_frame( filenames, ext = None, maxframes = 200, logfile = None ):
         loopframes = maxframes
     
         # Before starting, prints some feedback to log or terminal
-        feedbacklines = [        'LM_MEAN_FRAME:       Calculating memory-saving mean frame:',
+        feedbacklines = [        'CALC_MEAN_FRAME:     Calculating mean frame:',
                                  '                         {0} Frames of shape {1}'.format( totframes, frame_shape ),
                                  '                         Max {0} frames loaded simultaneously ({1} chunks)'.format(maxframes, nchunks) ]
         if np.sum( chunkweights ) != 1.0:
@@ -146,7 +148,7 @@ def lm_mean_frame( filenames, ext = None, maxframes = 200, logfile = None ):
         loopframes = 0
         
         # Before starting, prints some feedback to log or terminal
-        feedbacklines = [        'LM_MEAN_FRAME:       Calculating mean frame:',
+        feedbacklines = [        'CALC_MEAN_FRAME:     Calculating mean frame:',
                                  '                         {0} Frames of shape {1}'.format( totframes, frame_shape ),
                                  '                     Calculating average frame...' , ]
         if logfile is not None:
