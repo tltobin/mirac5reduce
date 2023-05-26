@@ -25,10 +25,10 @@
 [REDUCTION]
 
 # Path indicating where the raw observation fits files from the telescope are stored.
-raw_data_path = ''
+raw_data_path = 
 
 # Path indicating where the output files created by reduction and analysis scripts should be saved
-reduce_outpath = ''
+reduce_outpath = 
 
 # Start and end file numbers (inclusive) indicating the range of *observation* files for this reduction
 raw_data_startno = 
@@ -43,11 +43,11 @@ raw_data_endno   =
 [CALIB]
 
 # Path indicating where the raw dark/flat fits files from the telescope are stored.
-raw_cals_path = ''
+raw_cals_path = 
 
 # Path where the output files created by the calibration scripts should be saved 
 #   (includes bad pixel mask and any master dark/flat frames)
-calib_outpath = ''
+calib_outpath = 
 
 # Start and end file numbers (inclusive) indicating the range of DARK files for this reduction
 raw_dark_startno = 
@@ -87,5 +87,5 @@ data_ext = 0
 # Naming convention used for the raw fits files created by MIRAC5. Should be formatted such that the file
 #   number, that changes from file to file, is represented by a '*'.
 #   Eg. if file names are like 'gsnapImg201.fits', this should be set to 'gsnapImg*.fits'
-raw_name_fmt = 'gsnapImg*.fits'
+raw_name_fmt = gsnapImg*.fits
 

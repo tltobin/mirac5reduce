@@ -43,13 +43,16 @@ def lm_mean_frame( filenames, ext = None, maxframes = 200, logfile = None ):
                                 to be combined are stored. Is only used if multiple files are indicated by 
                                 filenames.
                             
-            maxframes       Int
+            maxframes       Int or None
                             
                                 [ Default = 200 ]
                             
                                 The maximum number of input 2D frames that are allowed to be loaded into 
                                 memory at any given time. Keep in mind that an additional 2D frame of the same 
                                 size with the combined results will also be present in memory.
+                                
+                                If set to None, will operate with no limit, and read all provided data arrays
+                                in to memory simultaneously.
                             
             logfile         String or None
                             
@@ -105,31 +108,55 @@ def lm_mean_frame( filenames, ext = None, maxframes = 200, logfile = None ):
     # Creates an empty array to build up with the cumulative average and later return
     avgframe = np.zeros( frame_shape )
     
+    # If max number of frames was provided (as not None), determines how it needs to be split up into chunks
+    if maxframes is not None:
     
-    # Creates arrays of number of frames per chunk and the associated weights to use for each chunk of frames 
-    #   when added to avgframe array 
-    nchunks = ceil( totframes / maxframes )
-    nframes = np.array( [ maxframes, ]*nchunks )
-    if ( totframes % maxframes ) != 0:
-        nframes[-1] = ( totframes % maxframes )
-    frameweights = nframes / totframes
+        # Creates arrays of number of frames per chunk and the associated weights to use for each chunk of frames 
+        #   when added to avgframe array 
+        nchunks = ceil( totframes / maxframes )
+        nframes = np.array( [ maxframes, ]*nchunks )
+        if ( totframes % maxframes ) != 0:
+            nframes[-1] = ( totframes % maxframes )
+        chunkweights = nframes / totframes
+        loopframes = maxframes
     
-    # Before starting, prints some feedback to log or terminal
-    feedbacklines = [        'LM_MEAN_FRAME:       Calculating memory-saving mean frame:',
-                             '                         {0} Frames of shape {1}'.format( totframes, frame_shape ),
-                             '                         Max {0} frames loaded simultaneously ({1} chunks)'.format(maxframes, nchunks), ]
-    if np.sum( frameweights ) != 1.0:
-        tmpsum = np.sum( frameweights )
-        feedbacklines.append('                     Warning: Chunk weights do not sum to 1. Actual Sum: {0} (diff {1:.2e})'.format( tmpsum, 1.-tmpsum )  )
-    feedbacklines.append(    '                     Calculating average frame' )
-    if logfile is not None:
-        with open(logfile,'a') as lf:
-            lf.write( '\n' )
-            lf.write( '\n'.join( feedbacklines ) )
+        # Before starting, prints some feedback to log or terminal
+        feedbacklines = [        'LM_MEAN_FRAME:       Calculating memory-saving mean frame:',
+                                 '                         {0} Frames of shape {1}'.format( totframes, frame_shape ),
+                                 '                         Max {0} frames loaded simultaneously ({1} chunks)'.format(maxframes, nchunks) ]
+        if np.sum( chunkweights ) != 1.0:
+            tmpsum = np.sum( chunkweights )
+            feedbacklines.append('                     Warning: Chunk weights do not sum to 1. Actual Sum: {0} (diff {1:.2e})'.format( tmpsum, 1.-tmpsum )  )
+        feedbacklines.append(    '                     Calculating average frame' )
+        if logfile is not None:
+            with open(logfile,'a') as lf:
+                lf.write( '\n'.join( feedbacklines ) )
+        else:
+            for i in range(len(feedbacklines)-1):
+                print( feedbacklines[i] )
+            print( feedbacklines[-1], end='' )
+    
+    # If there is no limit on number of frames that can be read in, just has single chunk with all frames
     else:
-        for i in range(len(feedbacklines)-1):
-            print( feedbacklines[i] )
-        print( feedbacklines[-1], end='' )
+    
+        # Creates same variables as memory-saving version 
+        nchunks = 1
+        nframes = np.array([ totframes, ])
+        chunkweights = nframes / totframes
+        loopframes = 0
+        
+        # Before starting, prints some feedback to log or terminal
+        feedbacklines = [        'LM_MEAN_FRAME:       Calculating mean frame:',
+                                 '                         {0} Frames of shape {1}'.format( totframes, frame_shape ),
+                                 '                     Calculating average frame...' , ]
+        if logfile is not None:
+            with open(logfile,'a') as lf:
+                lf.write( '\n'.join( feedbacklines ) )
+        else:
+            for i in range(len(feedbacklines)-1):
+                print( feedbacklines[i] )
+            print( feedbacklines[-1], end='' )
+    
     
     # Actually iterates through frames, reading them in by chunks and building up the avgframe
     # In both use cases, should have list of filenames and extlist with one entry per frame, even if 
@@ -144,7 +171,7 @@ def lm_mean_frame( filenames, ext = None, maxframes = 200, logfile = None ):
             print('.', end='')
         
         # Determines the indices of the files in filenames that will be read in for that chunk of frames
-        file_idx_str = i * maxframes
+        file_idx_str = i * loopframes
         file_idx_end = file_idx_str + nframes_in_chunk
         
         # Retrieves the data from those files and builds them into a list, which will be turned into an 
@@ -156,7 +183,7 @@ def lm_mean_frame( filenames, ext = None, maxframes = 200, logfile = None ):
         
         # Then calculate the mean frame, weight it, and add it to the avgframe
         mean_chunk = np.nanmean( chunk_frames, axis=0 )
-        avgframe += frameweights[i] * mean_chunk
+        avgframe += chunkweights[i] * mean_chunk
     
     # Tidies up feedback lines
     if logfile is not None:
