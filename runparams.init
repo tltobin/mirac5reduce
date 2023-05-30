@@ -20,10 +20,11 @@
 ##
 ##      [DATA_ARCH]         Contains parameters related to data architecture, or general file format.
 ##                          May change occasionally in early stages of instrument development, but should
-##                              not vary significantly over the course of a run.
+##                          not vary significantly over the course of a run.
 ##
 ##############################################################################################################
-## This section includes parameters that are specific to your data reduction and must be updated.
+## This section includes parameters that are specific to your data reduction and must be updated unless
+## provided directly to the function being called.
 [REDUCTION]
 
 # Path indicating where the raw observation fits files from the telescope are stored.
@@ -36,12 +37,17 @@ reduce_outpath =
 raw_data_startno = 
 raw_data_endno   = 
 
+# Chop and nod frequency used, in Hz. Chopfreq should be larger than nodfreq.
+chopfreq =
+nodfreq  = 
+
 
 
 
 
 ##############################################################################################################
-## This section is includes parameters that are only used by config scripts.
+## This section is includes parameters that are only used by config scripts. Should only need to be updated 
+## when running config scripts, but should reflect the calibration files used for the reduction listed above.
 [CALIB]
 
 # Path indicating where the raw dark/flat fits files from the telescope are stored.
@@ -65,7 +71,7 @@ bp_threshold = 7
 
 ##############################################################################################################
 ## This section is includes parameters that are related to the computer that you are running the reduction on.
-## Used to implement memory use restrictions, if necessary.
+## Used to implement memory use restrictions, if necessary. All parameters REQUIRED.
 [COMPUTING]
 
 # Boolean switch to indicate whether to implement memory-saving measures when possible (True) or not (False)
@@ -80,6 +86,7 @@ max_frames_inmem = None
 ##############################################################################################################
 ## This section is restricted to parameters that govern the architecture of the raw data created by mirac-5.
 ## They will need to be set initially in testing, but will not need to be updated from run to run.
+##  All parameters REQUIRED.
 [DATA_ARCH]
 
 # Extension of the raw FITS file in which the frame data is stored

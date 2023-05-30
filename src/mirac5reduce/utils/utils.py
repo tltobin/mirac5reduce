@@ -182,3 +182,104 @@ def write_mean_frame( meanfile_name, avgframe, frametype, raw_filelist, raw_file
     
     # Finally, write this hdu to the output file
     hdu.writeto( meanfile_name )
+
+
+
+def write_chopnod_frame( outfile_name, diffframe, raw_filelist, raw_filepath = None, header_dict = None ):
+    """
+    Saves mean chop/nod difference frame calculated from a list of raw frames to an output fits file, 
+    populating the header with some calculation details and some keys copied over from the first raw fits file 
+    used to calculate it.
+    
+    Required Parameters
+    -------------------
+    
+            outfile_name   String
+            
+                                The file name(s) (with paths) to which the output fits file with the mean
+                                chop/nod difference frame and associated data will be saved.
+                                
+            diffframe       NumPy Array
+                            
+                                The mean chop/nod difference frame calculated from the provided input 
+                                frames. Will be saved in the output fits file's 0th extension.
+            
+            raw_filelist    List of Strings
+                            
+                                Sorted list of file names used to calculate the diffframe provided.
+                                
+                                
+                            
+    Optional Parameters
+    -------------------
+            
+            raw_filepath    String or None
+                                
+                                [ Default = None ]
+                            
+                                The path where the raw fits files in raw_filelist are stored. 
+                                
+                                If provided (not None), will copy over a number of header key cards from the
+                                first fits file in raw_filelist into the new output file.
+            
+            header_dict     Dictionary/OrderedDict or None
+                                
+                                [ Default = None ]
+                                
+                                Contains fits header card values for several keys provided by the function
+                                used to calculate the mean difference frame. Provided values are saved to
+                                the fits header. 
+
+                            
+    Output Files Generated
+    ----------------------
+    
+        [outfile_name]
+        
+                            Fits file containing (in extension 0) the provided diffframe as data. 
+                            
+                            Copies some info from original fits file headers to the extension 0 header of this
+                            file, as well as saving the start and end file numbers and the total number of
+                            files used.
+    
+    """
+    
+    
+    
+    # Creates hdu to save to file with mean frame
+    hdu = fits.PrimaryHDU( diffframe )
+    
+    # Populates header directly with general info 
+    hdu.header['FILETYPE'] =   'ChopNod Mean Diff'
+    hdu.header['NFRAMES' ] = ( len(raw_filelist), 'Number raw frames used' )
+    hdu.header['FILE_STR'] = ( raw_filelist[0]  , 'First raw file used' )
+    hdu.header['FILE_END'] = ( raw_filelist[-1] , 'Last raw file used' )
+    hdu.header['COMBTYPE'] = ( 'MEAN DIFF'      , 'How raw frames were combined' )
+    
+    # If header_dict from calc_chopnod_frame was provided, writes the contained fits header keys/values to the
+    #   header
+    if header_dict is not None:
+        for key in header_dict.keys():
+            hdu.header[key] = header_dict[key]
+    
+    
+    # If a raw_filepath was provided, checks first file for desired keys and copies any to header of output
+    if raw_filepath is not None:
+        
+        # List of header keys to copy over from the first raw dark file
+        keys_to_copy = [ 'DATE', 'TIMEDAY', 'PLUS',                         # when first dark frame was taken
+                         'SNAP_VER', 'SNAPDATE', 'DEVICE', 'PARTNUM',       # versioning, if ever wanted
+                         'DCFILE', 'INITFILE',                              # ref files of potential interest
+                         'WINTRANS', 'DETPITCH', 'APERDIST', 'APERDIAM',    # some info about exposures, if wanted
+                         'FRMRATE', 'INTEGRT', 'INTEGRTM',                  # frame rate and integration
+                         'GAIN_SET', 'CH0POWER', 'CH1POWER', 'CH2POWER', 'CH3POWER', 'CH4POWER', 'CH5POWER' ]
+
+        # Opens the first raw dark file used to create the mean and copies some values from its header to the
+        #   new header. Assumes these are in the 0th extension, not the data ext
+        with fits.open( os.path.join( raw_filepath, raw_filelist[0] ) ) as raw_ref_hdu:
+            for key in keys_to_copy:
+                if key in raw_ref_hdu[0].header.keys():
+                    hdu.header[key] = raw_ref_hdu[0].header.cards[key][1:]
+    
+    # Finally, write this hdu to the output file
+    hdu.writeto( outfile_name )
