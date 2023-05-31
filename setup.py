@@ -48,11 +48,10 @@ setup(
     
     packages = [ 'mirac5reduce' ],
     package_dir={'': 'src', },
-    # find_packages( where="prism" ),
     
     # Use these lines to prevent installation without specific versions of python & required subpackages
     # python_requires=">=3.7, <4",
-    # install_requires=["numpy>=1.16","matplotlib","astropy","scipy"],
+    install_requires=["numpy","matplotlib","astropy"],
     
     # Can use this to install any additional data files that need to be installed with package
     # package_data={  # Optional
