@@ -7,15 +7,19 @@ Disclaimer: Very early stages, still under development!
 
 The following python packages are required for for `mirac5reduce`:
 
-*NumPy
-*matplotlib
-*astropy
+-NumPy
+
+-matplotlib
+
+-astropy
 
 The following packages are recommended but not required:
 
-*Jupyter Notebook - a sample jupyter notebook is located in `docs` to provide easy access to the main functions. However, it isn't required.
-*SAOImage DS9 - for viewing and examining fits files
-*Aperture Photometry Tool (APT) - Interactive GUI for source and sky photometry
+-Jupyter Notebook - a sample jupyter notebook is located in `docs` to provide easy access to the main functions. However, it isn't required.
+
+-SAOImage DS9 - for viewing and examining fits files
+
+-Aperture Photometry Tool (APT) - Interactive GUI for source and sky photometry
 
 ## Installation
 
