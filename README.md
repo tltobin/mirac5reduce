@@ -22,6 +22,12 @@ To install mirac5reduce, download the package from GitHub, go into its top-level
 pip install .
 ```
 
+Alternately, you can enter:
+```
+pip install -e .
+```
+to install the package in *developer* mode, meaning that any changes to the documents will be automatically reflected the next time the package is used.
+
 ## Getting Started
 
 In the `docs` directory, you will find the `m5r_helper.ipynb` jupyter notebook, which will walk you through getting started.
