@@ -1,6 +1,8 @@
 # mirac5reduce
 Data Reduction for MIRAC-5 Instrument
 
+Disclaimer: Very early stages, still under development!
+
 ## Required and Recommended Packages
 
 The following python packages are required for for `mirac5reduce`:
