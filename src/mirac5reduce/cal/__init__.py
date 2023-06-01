@@ -2,4 +2,4 @@
 from .. import __version__
 
 # Imports packages contained in this directory
-from . import bpmask
+from . import bpmask, flatfield
