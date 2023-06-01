@@ -14,10 +14,7 @@ from ..utils.utils import get_raw_filenames
 
 ################## Functions ####################
 
-def create_flatfield( config, 
-                      datapath = None, startno = None, endno = None, outfile = None, 
-                      dark_file = None, bpmask_file = None, 
-                      logfile = None, debug = False ):
+def create_flatfield( config, logfile = None, debug = False, **kwargs ):
     """
     Creates a scaled flatfield frame from raw flat frames and a mean dark frame, and saves to an output fits 
     file.
@@ -40,71 +37,88 @@ def create_flatfield( config,
             
                                 The file name(s) (with paths) of the configuration file.
             
-    Optional Parameters
-    -------------------
+    Optional Parameters: Config File Override
+    -----------------------------------------
             
-            datapath        String or None
+            datapath        String
                                 
-                                [ Default = None ]
+                                [ Default = Config file value for raw_cals_path ]
                                 
                                 The path where the raw flat frame fits files are stored.
                                 
-                                If set to None, will use value specified in the config file as raw_cals_path.
+            startno         Integer
                                 
-            startno         Integer or None
+                                [ Default = Config file value for raw_flat_startno ]
                                 
-                                [ Default = None ]
-                                
-                                File number of the first raw flat frame.
-                                
-                                If set to None, will use value specified in the config file as 
-                                raw_flat_startno.
+                                File number of the first raw flat frame (inclusive).
             
-            endno           Integer or None
+            endno           Integer
                                 
-                                [ Default = None ]
+                                [ Default = Config file value for raw_flat_startno ]
                                 
-                                File number of the last raw flat frame.
-                                
-                                If set to None, will use value specified in the config file as raw_flat_endno.
+                                File number of the last raw flat frame (inclusive).
             
-            outfile         String or None
+            outpath         String
                                 
-                                [ Default = None ]
+                                [ Default = Config file value for calib_outpath ]
                                 
-                                Path and name to which the fits file with the resulting flatfield frame will 
-                                be saved. 
-                                
-                                If set to None, will derive using values imported from the provided config
-                                file:
-                                outfile = '[calib_outpath]/flatfield_[startno]_[endno].fits'.
+                                Path where the output files created by the calibration scripts are saved.
+                                Mean dark file and bad pixel mask (if used) should be located in this path.
+                                Resulting flatfield file will also be saved to this path.
             
-            dark_file       String or None
+            outfile         String
                                 
-                                [ Default = None ]
+                                [ Default = flatfield_[startno]_[endno].fits ]
                                 
-                                The path and file name for the mean dark file that is closest in time to the
-                                raw flat frames specified.
+                                File name used for the created flatfield fits file. File is saved within the
+                                outpath.
+            
+            dark_file       String
                                 
-                                If set to None, will derive using values imported from the provided config 
-                                file:
+                                [ Default = dark_[dark_startno]_[dark_endno].fits ]
                                 
-                                [calib_outpath]/dark_[raw_dark_startno]_[raw_dark_endno].fits
+                                The file name for the mean dark file that is closest in time to the raw flat 
+                                frames specified.
+                                
+                                If not specified explicitly, determines the filename above using values of 
+                                dark_startno and dark_endno, which can be read in from the config file as the
+                                values of raw_dark_startno and raw_dark_endno, respectively, or provided
+                                explicitly when calling this function.
             
             bpmask_file     String or None
                                 
-                                [ Default = None ]
+                                [ Default = bpmask_[dark_startno]_[dark_endno].fits ]
                                 
-                                The path and file name for the bad pixel file calculated from the provided 
-                                dark_file. Used to mask outstanding pixel values when calculating the median
-                                of each frame, which is used to normalize them before combining. Final saved
-                                flatfield frame is not masked.
+                                The file name for the bad pixel file calculated from the provided dark_file. 
+                                Used to mask outstanding pixel values when calculating the median of each 
+                                frame, which is used to normalize them before combining. Final saved flatfield
+                                frame is not masked.
                                 
-                                If set to None, will derive using values imported from the provided config 
-                                file:
-                                [calib_outpath]/bpmask_[raw_dark_startno]_[raw_dark_endno].fits
+                                If not specified explicitly, determines the filename above using values of 
+                                dark_startno and dark_endno, which can be read in from the config file as the
+                                values of raw_dark_startno and raw_dark_endno, respectively, or provided
+                                explicitly when calling this function.
                                 
-                                If that file does not exist, no masking will occur.
+                                If set to None or the specified file does not exist, no masking will occur.
+            
+            dark_startno    Integer
+                                
+                                [ Default = Config file value for raw_dark_startno ]
+                                
+                                File number of the first raw dark frame (inclusive). Used only to determine
+                                default values for dark_file and bpmask_file, above.
+            
+            dark_endno      Integer
+                                
+                                [ Default = Config file value for raw_dark_endno ]
+                                
+                                File number of the last raw dark frame (inclusive). Used only to determine
+                                default values for dark_file and bpmask_file, above.
+            
+                                
+            
+    Optional Parameters: Other
+    --------------------------
             
             logfile         String or None
                             
@@ -142,7 +156,7 @@ def create_flatfield( config,
     Output Files Generated
     ----------------------
     
-        [outfile]
+        [outpath]/[outfile]
         
                             Fits file containing (in extension 0) the generated flatfield frame.
                             
@@ -171,30 +185,83 @@ def create_flatfield( config,
     except:
         data_ext = None
     
-    # Parses optional keys that may have been provided to override the config values and sets any default
-    #   values
-    if datapath is None:
-        datapath = conf[  'CALIB'  ]['raw_cals_path']
-    if startno is None:
-        startno  = conf[  'CALIB'  ].getint('raw_flat_startno')
-    if endno is None:
-        endno    = conf[  'CALIB'  ].getint('raw_flat_endno')
-    if outfile is None:
-        outpath  = conf[  'CALIB'  ]['calib_outpath']
-        outfile  = os.path.join( outpath, 'flatfield_{0}_{1}.fits'.format(startno, endno) )
-    if dark_file is None:
-        outpath  = conf[  'CALIB'  ]['calib_outpath']
-        dark_startno = conf[  'CALIB'  ].getint('raw_dark_startno')
-        dark_endno   = conf[  'CALIB'  ].getint('raw_dark_endno')
-        dark_file    = os.path.join( outpath, 'dark_{0}_{1}.fits'.format(dark_startno, dark_endno) )
-    if bpmask_file is None:
-        outpath  = conf[  'CALIB'  ]['calib_outpath']
-        dark_startno = conf[  'CALIB'  ].getint('raw_dark_startno')
-        dark_endno   = conf[  'CALIB'  ].getint('raw_dark_endno')
-        bpmask_file    = os.path.join( outpath, 'bpmask_{0}_{1}.fits'.format(dark_startno, dark_endno) )
-        if not os.path.isfile( bpmask_file ):
-            bpmask_file = None
     
+    # Parses optional keys that may have been provided in **kwargs to override the config values and sets any 
+    #   default values
+    datapath     = conf[  'CALIB'  ]['raw_cals_path']
+    if 'datapath' in kwargs.keys():
+        datapath = kwargs['datapath']
+    elif 'raw_cals_path' in kwargs.keys():
+        datapath = kwargs['raw_cals_path']
+    
+    startno      = conf[  'CALIB'  ]['raw_flat_startno']
+    if 'startno' in kwargs.keys():
+        startno = kwargs['startno']
+    elif 'flat_startno' in kwargs.keys():
+        startno = kwargs['flat_startno']
+    elif 'raw_flat_startno' in kwargs.keys():
+        startno = kwargs['raw_flat_startno']
+    else:
+        startno = int( startno )
+    
+    endno        = conf[  'CALIB'  ]['raw_flat_endno']
+    if 'endno' in kwargs.keys():
+        endno = kwargs['endno']
+    elif 'flat_endno' in kwargs.keys():
+        endno = kwargs['flat_endno']
+    elif 'raw_flat_endno' in kwargs.keys():
+        endno = kwargs['raw_flat_endno']
+    else:
+        endno = int( endno )
+    
+    outpath      = conf[  'CALIB'  ]['calib_outpath']
+    if 'outpath' in kwargs.keys():
+        outpath = kwargs['outpath']
+    elif 'calib_outpath' in kwargs.keys():
+        outpath = kwargs['calib_outpath']
+    
+    outfile = None
+    if 'outfile' in kwargs.keys():
+        outfile = kwargs['outfile']
+    else:
+        outfile = 'flatfield_{0}_{1}.fits'.format( startno, endno )
+    
+    dark_startno = conf[  'CALIB'  ]['raw_dark_startno']
+    if 'dark_startno' in kwargs.keys():
+        dark_startno = kwargs['dark_startno']
+    elif 'raw_dark_startno' in kwargs.keys():
+        dark_startno = kwargs['raw_dark_startno']
+    else:
+        try:
+            dark_startno = int( dark_startno )
+        except:
+            dark_startno = None
+    
+    dark_endno   = conf[  'CALIB'  ]['raw_dark_endno']
+    if 'dark_endno' in kwargs.keys():
+        dark_endno = kwargs['dark_endno']
+    elif 'raw_dark_endno' in kwargs.keys():
+        dark_endno = kwargs['raw_dark_endno']
+    else:
+        try:
+            dark_endno = int( dark_endno )
+        except:
+            dark_endno = None
+    
+    dark_file = None
+    if 'dark_file' in kwargs.keys():
+        dark_file = kwargs['dark_file']
+    else:
+        dark_file = 'dark_{0}_{1}.fits'.format( dark_startno, dark_endno )
+    
+    bpmask_file = None
+    if 'bpmask_file' in kwargs.keys():
+        bpmask_file = kwargs['bpmask_file']
+    else:
+        bpmask_file = 'bpmask_{0}_{1}.fits'.format( dark_startno, dark_endno )
+        if not os.path.isfile( os.path.join( outpath, bpmask_file ) ):
+            bpmask_file = None
+        
         
     
     
@@ -204,6 +271,7 @@ def create_flatfield( config,
                          'CREATE_FLATFIELD.DEBUG       {0: >16} : {1}'.format( 'datapath', datapath ),
                          'CREATE_FLATFIELD.DEBUG       {0: >16} : {1}'.format( 'startno', startno ),
                          'CREATE_FLATFIELD.DEBUG       {0: >16} : {1}'.format( 'endno', endno ),
+                         'CREATE_FLATFIELD.DEBUG       {0: >16} : {1}'.format( 'outpath', outpath ),
                          'CREATE_FLATFIELD.DEBUG       {0: >16} : {1}'.format( 'outfile', outfile ),
                          'CREATE_FLATFIELD.DEBUG       {0: >16} : {1}'.format( 'dark_file', dark_file ),
                          'CREATE_FLATFIELD.DEBUG       {0: >16} : {1}'.format( 'bpmask_file', bpmask_file ),
@@ -251,7 +319,7 @@ def create_flatfield( config,
         print(feedback_msg)
     
     # Retrieves array from dark file ext 0
-    dark_array = fits.getdata( dark_file, 0 )
+    dark_array = fits.getdata( os.path.join( outpath, dark_file ), 0 )
     
     
     
@@ -267,7 +335,7 @@ def create_flatfield( config,
             print(feedback_msg)
         
         # Retrieves array from bpmask file ext 0
-        bpmask_array = fits.getdata( bpmask_file, 0 )
+        bpmask_array = fits.getdata( os.path.join( outpath, bpmask_file ), 0 )
     
     # Otherwise, prints a message and does basic bookkeeping
     else:
@@ -453,11 +521,11 @@ def create_flatfield( config,
     hdu.header['NFRAMES' ] = ( len(filelist)           , 'Number raw flat frames used' )
     hdu.header['FILE_STR'] = ( filelist[0]             , 'First raw flat file used'    )
     hdu.header['FILE_END'] = ( filelist[-1]            , 'Last raw flat file used'     )
-    hdu.header['DARKFILE'] = ( dark_file.split('/')[-1], 'Dark file used' )
+    hdu.header['DARKFILE'] = ( dark_file               , 'Dark file used' )
     
     
     # Copies some header values from the mean dark file used
-    with fits.open( dark_file ) as dark_hdu:
+    with fits.open( os.path.join( outpath, dark_file ) ) as dark_hdu:
         hdu.header['DKFRAMES'] = ( dark_hdu[0].header['NFRAMES' ], 'Number raw frames in darkfile' )
         hdu.header['DK_STR'  ] = ( dark_hdu[0].header['FILE_STR'], 'First raw file in darkfile' )
         hdu.header['DK_END'  ] = ( dark_hdu[0].header['FILE_END'], 'Last raw file in darkfile' )
@@ -465,8 +533,8 @@ def create_flatfield( config,
     
     # Copies some header keys from the bad pixel file, if one was used
     if bpmask_file is not None:
-        hdu.header['MASKFILE'] = ( bpmask_file.split('/')[-1], 'Bad pix mask file used' )
-        with fits.open( bpmask_file ) as bpmask_hdu:
+        hdu.header['MASKFILE'] = ( bpmask_file                   , 'Bad pix mask file used' )
+        with fits.open( os.path.join( outpath, bpmask_file ) ) as bpmask_hdu:
             hdu.header['MASKDARK'] = ( bpmask_hdu[0].header['DARKFILE' ], 'Dark file used to create bpmask'       )
             hdu.header['MASKNPIX'] = ( bpmask_hdu[0].header['NFLAGGED' ], 'Total number of pix flagged in bpmask' )
             hdu.header['MASKNSIG'] = ( bpmask_hdu[0].header['NSIG'     ], 'bp_threshold used to make bpmask'      )
@@ -506,7 +574,7 @@ def create_flatfield( config,
     
     
     # Finally, write this hdu to the output file
-    hdu.writeto( outfile )
+    hdu.writeto( os.path.join( outpath, outfile ) )
 
 
 
