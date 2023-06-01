@@ -1,5 +1,7 @@
 ################## Importing packages ####################
 
+from .. import __version__
+
 from glob import glob
 import os
 from astropy.io import fits

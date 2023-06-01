@@ -1,5 +1,7 @@
 ################## Importing packages ####################
 
+from .. import __version__
+
 from astropy.io import fits
 import numpy as np
 import configparser
@@ -185,7 +187,16 @@ def make_bpmask( config,
     
     # Populates header directly with general info 
     hdu.header['FILETYPE'] =   'Pixel Mask'
-    hdu.header['DARKFILE'] = ( dark_file.split('/')[-1], 'Dark file used' )
+    hdu.header['DARKFILE'] = ( dark_file.split('/')[-1], 'Dark file used'                            )
+    hdu.header['NFLAGGED'] = ( bpmask.sum()            , 'Total number bad pixels flagged'           )
+    
+    hdu.header['NSIG'    ] = ( bp_threshold            , 'Threshold x M.A.D. used (bp_threshold)'    )
+    hdu.header['DARKMAD' ] = ( mad_of_mean_dark        , 'Med. Abs. Dev. (M.A.D.) of mean dark (DN)' )
+    hdu.header['DARKMED' ] = ( med_of_mean_dark        , 'Median pix value of mean dark (DN)'        )
+    hdu.header['CUTOVER' ] = ( threshold_hidark        , 'Upper limit for good pix values (DN)'      )
+    hdu.header['NFLGOVER'] = ( bpmask_hidark.sum()     , 'Number pixels flagged for values > CUTOVER')
+    hdu.header['CUTUNDR' ] = ( threshold_lodark        , 'Lower limit for good pix values (DN)'      )
+    hdu.header['NFLGUNDR'] = ( bpmask_lodark.sum()     , 'Number pixels flagged for values < CUTUNDR')
     
     
     # Copies some header values from the mean dark file used

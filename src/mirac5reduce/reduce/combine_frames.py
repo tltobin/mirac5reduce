@@ -1,5 +1,7 @@
 ################## Importing packages ####################
 
+from .. import __version__
+
 import os
 import numpy as np
 import configparser

@@ -1,5 +1,7 @@
 ################## Importing packages ####################
 
+from .. import __version__
+
 import numpy as np
 from astropy.io import fits
 from math import ceil

@@ -2,6 +2,8 @@
 
 ################## Importing packages ####################
 
+from .. import __version__
+
 import numpy as np
 
 
