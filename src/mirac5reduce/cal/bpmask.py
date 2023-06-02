@@ -125,25 +125,26 @@ def make_bpmask( config, logfile = None, debug = False, **kwargs ):
     else:
         bp_threshold = float( bp_threshold )
     
-    startno      = conf[  'CALIB'  ]['raw_dark_startno']
-    if 'startno' in kwargs.keys():
-        startno = kwargs['startno']
-    elif 'dark_startno' in kwargs.keys():
-        startno = kwargs['dark_startno']
-    elif 'raw_dark_startno' in kwargs.keys():
-        startno = kwargs['raw_dark_startno']
-    else:
-        startno = int( startno )
+    if 'outfile' not in kwargs.keys() or 'dark_file' not in kwargs.keys():
+        startno      = conf[  'CALIB'  ]['raw_dark_startno']
+        if 'startno' in kwargs.keys():
+            startno = kwargs['startno']
+        elif 'dark_startno' in kwargs.keys():
+            startno = kwargs['dark_startno']
+        elif 'raw_dark_startno' in kwargs.keys():
+            startno = kwargs['raw_dark_startno']
+        else:
+            startno = int( startno )
     
-    endno        = conf[  'CALIB'  ]['raw_dark_endno']
-    if 'endno' in kwargs.keys():
-        endno = kwargs['endno']
-    elif 'dark_endno' in kwargs.keys():
-        endno = kwargs['dark_endno']
-    elif 'raw_dark_endno' in kwargs.keys():
-        endno = kwargs['raw_dark_endno']
-    else:
-        endno = int( endno )
+        endno        = conf[  'CALIB'  ]['raw_dark_endno']
+        if 'endno' in kwargs.keys():
+            endno = kwargs['endno']
+        elif 'dark_endno' in kwargs.keys():
+            endno = kwargs['dark_endno']
+        elif 'raw_dark_endno' in kwargs.keys():
+            endno = kwargs['raw_dark_endno']
+        else:
+            endno = int( endno )
     
     outpath      = conf[  'CALIB'  ]['calib_outpath']
     if 'outpath' in kwargs.keys():
