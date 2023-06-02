@@ -345,46 +345,44 @@ def calc_chopnod_frame( filenames, ext = None, chopfreq = None, nodfreq = None,
             # Retrieves the shape of the 2D data in that extension
             frame_shape = hdulist[ext0].data.shape
             
-            # Also retrieves integration time per frame from header, in msec
-            integ_msec = hdulist[0].header['INTEGRTM']
+            # Also retrieves frame rate from header, in frames per second
+            framerate = hdulist[0].header['FRMRATE']
     
-    
-    
-        # Converts integration time per frame from msec to seconds
-        integ_sec = integ_msec / 1000.
-    
-        # Determines the number of frames in each chop position
-        if chopfreq is not None:
-            chop_dt_sec  = 1. / float(chopfreq)         # Amount of time (in sec) spent in each chop position
-            chop_dframes = round(chop_dt_sec / integ_sec) # Number of frames in each chop position
-        else:
-            chop_dframes = totframes                    # If no chopping, all frames in same chop position
-    
-        # Determines the number of frames in each nod position
-        if nodfreq is not None:
-            nod_dt_sec   = 1. / float(nodfreq)          # Amount of time (in sec) spent in each nod position
-            nod_dframes  = round(nod_dt_sec / integ_sec)  # Number of frames in each nod position
-        else:
-            nod_dframes  = totframes                    # If no nodding, all frames in same nod position
         
-        # Number of chop/nod cycles (back and forth is one cycle)
-        Nchopcycles = int(totframes/(chop_dframes*2))
-        Nnodcycles  = int(totframes/(nod_dframes*2))
+        # Determines the number of frames in each chop cycle and position
+        chop_cycle_frames = round( float(framerate) / float(chopfreq) )     # frames / chopcycle = (frames/sec) / (chopcycle/sec)
+        chop_pos_frames   = round( chop_cycle_frames / 2 )                  # 2 chop positions per cycle
+        
+        # Determines the number of frames in each nod cycle and position
+        if nodfreq is not None:
+            nod_cycle_frames = round( float(framerate) / float(nodfreq) )   # frames / nodcycle = (frames/sec) / (nodcycle/sec)
+            nod_pos_frames   = round( nod_cycle_frames / 2 )                # 2 nod positions per cycle
+        else:
+            nod_pos_frames = totframes
+            nod_cycle_frames = nod_pos_frames * 2
+        
+        # Number of chop/nod cycles
+        Nchopcycles = int(totframes/chop_cycle_frames)
+        Nnodcycles  = int(totframes/nod_cycle_frames )
         
         # Number of chop cycles per nod *position*
-        Nchopcyc_per_nodpos = int( Nchopcycles/(2*Nnodcycles) )
+        Nchopcyc_per_nodpos = int( nod_pos_frames / nod_cycle_frames )
         
         # Creates array of +/- 1 indicating whether each frame will be added or subtracted from the total
-        single_chopcycle_signs = np.concatenate(( np.ones(chop_dframes), -1*np.ones(chop_dframes) ))
-        if totframes >= 2*chop_dframes:
+        single_chopcycle_signs = np.concatenate(( np.ones(chop_pos_frames), -1*np.ones(chop_pos_frames) ))
+        
+        if totframes >= chop_cycle_frames :
             chopsigns = np.concatenate( [single_chopcycle_signs,] * Nchopcycles )
         else:
             chopsigns = single_chopcycle_signs[:totframes]
-        single_nodcycle_signs = np.concatenate(( np.ones(nod_dframes), -1*np.ones(nod_dframes) ))
-        if totframes >= 2*nod_dframes:
+        
+        single_nodcycle_signs = np.concatenate(( np.ones(nod_pos_frames), -1*np.ones(nod_pos_frames) ))
+        
+        if totframes >= nod_cycle_frames:
             nodsigns = np.concatenate( [single_nodcycle_signs,] * Nnodcycles )
         else:
             nodsigns = single_nodcycle_signs[:totframes]
+        
         framesigns = chopsigns * nodsigns
         
         # And calculates the weight applied to each frame to make the result an average
@@ -505,12 +503,11 @@ def calc_chopnod_frame( filenames, ext = None, chopfreq = None, nodfreq = None,
     
     # If returning the header_dict, creates it
     if _fitsdict_:
-        header_dict = OrderedDict({ 'FRAMEINT'   : ( integ_msec         , 'frame integ. time (msec)'               ),
-                                    'CHOPFREQ'   : ( chopfreq           , 'chop frequency (Hz)'                    ),
-                                    'CHOPFRAM'   : ( chop_dframes       , 'frames per chop position'               ),
+        header_dict = OrderedDict({ 'CHOPFREQ'   : ( chopfreq           , 'chop frequency (Hz)'                    ),
+                                    'CHOPFRAM'   : ( chop_pos_frames    , 'frames per chop position'               ),
                                     'CHOPCYCL'   : ( Nchopcycles        , 'number of chop (AB) cycles'             ),
                                     'NODFREQ'    : ( nodfreq            , 'nod frequency (Hz)'                     ),
-                                    'NODFRAM'    : ( nod_dframes        , 'frames per nod position'                ),
+                                    'NODFRAM'    : ( nod_pos_frames     , 'frames per nod position'                ),
                                     'NODCYCL'    : ( Nnodcycles         , 'number of nod (12) cycles'              ),
                                     'CSPERNOD'   : ( Nchopcyc_per_nodpos, 'number of chop cycles per nod position' )
                                     })
