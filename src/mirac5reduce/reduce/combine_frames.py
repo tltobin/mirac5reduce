@@ -11,9 +11,7 @@ from ..utils.calcframes import calc_mean_frame, calc_chopnod_frame
 
 ################## Functions ####################
 
-def meanframe( config, frametype, 
-               datapath = None, startno = None, endno = None, outfile = None,
-               logfile = None, debug = False ):
+def meanframe( config, frametype, logfile = None, debug = False, **kwargs ):
     """
     Combines raw frame files (with file numbers ranging from startno and endno) into a single mean frame and
     saves the result to a fits file. 
@@ -39,46 +37,39 @@ def meanframe( config, frametype,
                                     - endno  
                                     - outfile 
                                 See the descriptions for these parameters below for more info.
+    
+    Optional Parameters: Config File Override
+    -----------------------------------------
             
-    Optional Parameters
-    -------------------
-            
-            datapath        String or None
+            datapath        String
                                 
-                                [ Default = None ]
+                                [ Default = Config file value for raw_cals_path/raw_data_path ]
                                 
-                                The path where the raw fits file frames to be averaged are stored.
-                                
-                                If set to None, will use value imported from the provided config file as
-                                determined by the specified frametype.
+                                The path where the raw fits frame fits files are stored.
                                 
                                 If frametype is 'dark' or 'flat', uses config value, raw_cals_path.
                                 
                                 Otherwise, uses config value, raw_data_path.
-            
-            startno         Integer or None
                                 
-                                [ Default = None ]
+            startno         Integer
+                                
+                                [ Default = Config file value for 
+                                  raw_dark_startno/raw_flat_startno/raw_data_startno ]
                                 
                                 File number of the first file in the range of files to be averaged together.
-                                
-                                If set to None, will use value imported from the provided config file as
-                                determined by the specified frametype.
                                 
                                 If frametype is 'dark', uses config value, raw_dark_startno.
                                 
                                 If frametype is 'flat', uses config value, raw_flat_startno.
                                 
                                 Otherwise, uses config value, raw_data_startno.
-            
-            endno           Integer or None
                                 
-                                [ Default = None ]
+            endno           Integer
+                                
+                                [ Default = Config file value for 
+                                  raw_dark_endno/raw_flat_endno/raw_data_endno ]
                                 
                                 File number of the last file in the range of files to be averaged together.
-                                
-                                If set to None, will use value imported from the provided config file as
-                                determined by the specified frametype.
                                 
                                 If frametype is 'dark', uses config value, raw_dark_endno.
                                 
@@ -86,21 +77,25 @@ def meanframe( config, frametype,
                                 
                                 Otherwise, uses config value, raw_data_endno.
             
-            outfile         String or None
+            outpath         String
                                 
-                                [ Default = None ]
+                                [ Default = Config file value for calib_outpath/reduce_outpath ]
                                 
-                                Path and name to which the fits file with the resulting mean frame will be 
-                                saved. 
+                                The path to which the output file created by this function will be saved.
                                 
-                                If set to None, will be determined using values imported from the provided 
-                                config file as determined by the specified frametype.
+                                If frametype is 'dark' or 'flat', uses config value, calib_outpath.
                                 
-                                If frametype is 'dark' or 'flat', uses config value, calib_outpath, to set 
-                                outfile = '[calib_outpath]/[frametype]_[startno]_[endno].fits'.
+                                Otherwise, uses config value, reduce_outpath.
+            
+            outfile         String
                                 
-                                Otherwise, uses config value, reduce_outpath, to set 
-                                outfile = '[reduce_outpath]/[frametype]_[startno]_[endno].fits'.
+                                [ Default = [frametype]_[startno]_[endno].fits ]
+                                
+                                File name used for the created mean frame fits file. File is saved within 
+                                the outpath.
+                                
+    Optional Parameters: Other
+    --------------------------
             
             logfile         String or None
                             
@@ -144,7 +139,7 @@ def meanframe( config, frametype,
     Output Files Generated
     ----------------------
     
-        [outfile]
+        [outpath]/[outfile]
         
                             Fits file containing (in extension 0) the calculated mean frame. 
                             
@@ -171,31 +166,90 @@ def meanframe( config, frametype,
     except:
         data_ext = None
     
-    # Parses optional keys that may have been provided to override the config values and sets any default
-    #   values based on the provided frametype
+    # Parses optional keys that may have been provided in **kwargs to override the config values and sets any 
+    #   default values based on the provided frametype
     frametype = frametype.lower()
     
     if frametype in ['dark','flat']:
-        if datapath is None:
-            datapath = conf[  'CALIB'  ]['raw_cals_path']
-        if startno is None:
-            startno  = conf[  'CALIB'  ].getint('raw_{0}_startno'.format(frametype))
-        if endno is None:
-            endno    = conf[  'CALIB'  ].getint('raw_{0}_endno'.format(frametype))
-        if outfile is None:
-            outpath  = conf[  'CALIB'  ]['calib_outpath']
-            outfile  = os.path.join( outpath, '{0}_{1}_{2}.fits'.format(frametype, startno, endno) )
+        
+        datapath     = conf[  'CALIB'  ]['raw_cals_path']
+        if 'datapath' in kwargs.keys():
+            datapath = kwargs['datapath']
+        elif 'raw_cals_path' in kwargs.keys():
+            datapath = kwargs['raw_cals_path']
+    
+        startno      = conf[  'CALIB'  ]['raw_{0}_startno'.format(frametype)]
+        if 'startno' in kwargs.keys():
+            startno = kwargs['startno']
+        elif '{0}_startno'.format(frametype) in kwargs.keys():
+            startno = kwargs['{0}_startno'.format(frametype)]
+        elif 'raw_{0}_startno'.format(frametype) in kwargs.keys():
+            startno = kwargs['raw_{0}_startno'.format(frametype)]
+        else:
+            startno = int( startno )
+    
+        endno        = conf[  'CALIB'  ]['raw_{0}_endno'.format(frametype)]
+        if 'endno' in kwargs.keys():
+            endno = kwargs['endno']
+        elif '{0}_endno'.format(frametype) in kwargs.keys():
+            endno = kwargs['{0}_endno'.format(frametype)]
+        elif 'raw_{0}_endno'.format(frametype) in kwargs.keys():
+            endno = kwargs['raw_{0}_endno'.format(frametype)]
+        else:
+            endno = int( endno )
+    
+        outpath      = conf[  'CALIB'  ]['calib_outpath']
+        if 'outpath' in kwargs.keys():
+            outpath = kwargs['outpath']
+        elif 'calib_outpath' in kwargs.keys():
+            outpath = kwargs['calib_outpath']
+    
+        outfile = None
+        if 'outfile' in kwargs.keys():
+            outfile = kwargs['outfile']
+        else:
+            outfile = '{0}_{1}_{2}.fits'.format( frametype, startno, endno )
     
     else:
-        if datapath is None:
-            datapath = conf['REDUCTION']['raw_data_path']
-        if startno is None:
-            startno  = conf['REDUCTION'].getint('raw_data_startno')
-        if endno is None:
-            endno    = conf['REDUCTION'].getint('raw_data_endno')
-        if outfile is None:
-            outpath  = conf['REDUCTION']['reduce_outpath']
-            outfile  = os.path.join( outpath, '{0}_{1}_{2}.fits'.format(frametype, startno, endno) )
+        
+        datapath     = conf['REDUCTION']['raw_data_path']
+        if 'datapath' in kwargs.keys():
+            datapath = kwargs['datapath']
+        elif 'raw_data_path' in kwargs.keys():
+            datapath = kwargs['raw_data_path']
+    
+        startno      = conf['REDUCTION']['raw_data_startno']
+        if 'startno' in kwargs.keys():
+            startno = kwargs['startno']
+        elif 'data_startno' in kwargs.keys():
+            startno = kwargs['data_startno']
+        elif 'raw_data_startno' in kwargs.keys():
+            startno = kwargs['raw_data_startno']
+        else:
+            startno = int( startno )
+    
+        endno        = conf['REDUCTION']['raw_data_endno']
+        if 'endno' in kwargs.keys():
+            endno = kwargs['endno']
+        elif 'data_endno' in kwargs.keys():
+            endno = kwargs['data_endno']
+        elif 'raw_data_endno' in kwargs.keys():
+            endno = kwargs['raw_data_endno']
+        else:
+            endno = int( endno )
+    
+        outpath      = conf['REDUCTION']['reduce_outpath']
+        if 'outpath' in kwargs.keys():
+            outpath = kwargs['outpath']
+        elif 'reduce_outpath' in kwargs.keys():
+            outpath = kwargs['reduce_outpath']
+    
+        outfile = None
+        if 'outfile' in kwargs.keys():
+            outfile = kwargs['outfile']
+        else:
+            outfile = '{0}_{1}_{2}.fits'.format( frametype, startno, endno )
+        
         
     
     
@@ -206,6 +260,7 @@ def meanframe( config, frametype,
                          'MEANFRAME.DEBUG              {0: >16} : {1}'.format( 'datapath', datapath ),
                          'MEANFRAME.DEBUG              {0: >16} : {1}'.format( 'startno', startno ),
                          'MEANFRAME.DEBUG              {0: >16} : {1}'.format( 'endno', endno ),
+                         'MEANFRAME.DEBUG              {0: >16} : {1}'.format( 'outpath', outpath ),
                          'MEANFRAME.DEBUG              {0: >16} : {1}'.format( 'outfile', outfile ),
                          'MEANFRAME.DEBUG          Parameters retrieved from config file:',
                          'MEANFRAME.DEBUG              {0: >16} : {1}'.format( 'save_mem', save_mem ),
@@ -265,13 +320,11 @@ def meanframe( config, frametype,
     
     
     # Uses write_mean_frame function to save the calculated data to the desired fits file
-    write_mean_frame( outfile, avgframe, frametype, filelist, raw_filepath = datapath )
+    write_mean_frame( os.path.join( outpath, outfile ), avgframe, frametype, filelist, raw_filepath = datapath )
     
 
 
-def chopnodframe( config,
-                  datapath = None, startno = None, endno = None, chopfreq = None, nodfreq = None, outfile = None,
-                  logfile = None, debug = False ):
+def chopnodframe( config, logfile = None, debug = False, **kwargs ):
     """
     Combines raw frame files (with file numbers ranging from startno and endno) into a single mean chop/nod 
     difference frame and saves the result to a fits file. 
@@ -285,69 +338,57 @@ def chopnodframe( config,
             config          String
             
                                 The file name(s) (with paths) of the configuration file.
+    
+    Optional Parameters: Config File Override
+    -----------------------------------------
             
-    Optional Parameters
-    -------------------
-            
-            datapath        String or None
+            datapath        String
                                 
-                                [ Default = None ]
+                                [ Default = Config file value for raw_data_path ]
                                 
-                                The path where the raw fits file frames to be averaged are stored.
+                                The path where the raw fits frame fits files are stored.
                                 
-                                If set to None, will use value imported from the provided config file as
-                                raw_data_path.
-            
-            startno         Integer or None
+            startno         Integer
                                 
-                                [ Default = None ]
+                                [ Default = Config file value for raw_data_startno ]
                                 
-                                File number of the first file in the range of files to be averaged together.
+                                File number of the first file in the range of chop/nod files to be combined.
                                 
-                                If set to None, will use value imported from the provided config file as
-                                raw_data_startno.
-            
-            endno           Integer or None
+            endno           Integer
                                 
-                                [ Default = None ]
+                                [ Default = Config file value for raw_data_endno ]
                                 
-                                File number of the last file in the range of files to be averaged together.
+                                File number of the last file in the range of chop/nod files to be combined.
                                 
-                                If set to None, will use value imported from the provided config file as
-                                raw_data_endno.
-            
-            chopfreq        Float or None
+            chopfreq        Float
                                 
-                                [ Default = None ]
+                                [ Default = Config file value for chopfreq ]
                                 
                                 Frequency (in Hz) at which chopping occurs. This is converted into number of 
                                 frame files using header keys in the raw data files.
                                 
-                                Chopfreq should be larger than nodfreq.
-                                
-                                If set to None, will use the value imported from the provided config file 
-                                as chopfreq.
-                                
             nodfreq         Float or None
                                 
-                                [ Default = None ]
+                                [ Default = Config file value for nodfreq ]
                                 
                                 Frequency (in Hz) at which nodding occurs. This is converted into number of 
                                 frame files using header keys in the raw data files.
+            
+            outpath         String
                                 
-                                If set to None, will use the value imported from the provided config file 
-                                as nodfreq.
+                                [ Default = Config file value for reduce_outpath ]
                                 
-            outfile         String or None
+                                The path to which the output file created by this function will be saved.
+            
+            outfile         String
                                 
-                                [ Default = None ]
+                                [ Default = chopnod_[startno]_[endno].fits ]
                                 
-                                Path and name to which the fits file with the resulting mean frame will be 
-                                saved. 
-                                
-                                If set to None, will be determined using values imported from the provided 
-                                config file: uses config value, reduce_outpath, to set 
-                                outfile = '[reduce_outpath]/chopnod_[startno]_[endno].fits'.
+                                File name used for the created mean chop-nod subtracted frame fits file. File 
+                                is saved within the outpath.
+                            
+     Optional Parameters: Other
+    ---------------------------
             
             logfile         String or None
                             
@@ -362,7 +403,6 @@ def chopnodframe( config,
                                 [ Default = False ]
                             
                                 If set to True, will print additional debugging information to the terminal.
-                            
     Config File Parameters Used
     ---------------------------
     
@@ -386,7 +426,7 @@ def chopnodframe( config,
     Output Files Generated
     ----------------------
     
-        [outfile]
+        [outpath]/[outfile]
         
                             Fits file containing (in extension 0) the calculated mean chop/nod difference 
                             frame. 
@@ -416,30 +456,60 @@ def chopnodframe( config,
     except:
         data_ext = None
     
-    # Parses optional keys that may have been provided to override the config values and sets any default
-    #   values
-    if datapath is None:
-        datapath = conf['REDUCTION']['raw_data_path']
-    if startno is None:
-        startno  = conf['REDUCTION'].getint('raw_data_startno')
-    if endno is None:
-        endno    = conf['REDUCTION'].getint('raw_data_endno')
-    if outfile is None:
-        outpath  = conf['REDUCTION']['reduce_outpath']
-        outfile  = os.path.join( outpath, 'chopnod_{0}_{1}.fits'.format(startno, endno) )
-    if chopfreq is None:
-        chopfreq = conf['REDUCTION']['chopfreq']
+    # Parses optional keys that may have been provided in **kwargs to override the config values and sets any 
+    #   default values
+    datapath     = conf['REDUCTION']['raw_data_path']
+    if 'datapath' in kwargs.keys():
+        datapath = kwargs['datapath']
+    elif 'raw_data_path' in kwargs.keys():
+        datapath = kwargs['raw_data_path']
+    
+    startno      = conf['REDUCTION']['raw_data_startno']
+    if 'startno' in kwargs.keys():
+        startno = kwargs['startno']
+    elif 'data_startno' in kwargs.keys():
+        startno = kwargs['data_startno']
+    elif 'raw_data_startno' in kwargs.keys():
+        startno = kwargs['raw_data_startno']
+    else:
+        startno = int( startno )
+    
+    endno        = conf['REDUCTION']['raw_data_endno']
+    if 'endno' in kwargs.keys():
+        endno = kwargs['endno']
+    elif 'data_endno' in kwargs.keys():
+        endno = kwargs['data_endno']
+    elif 'raw_data_endno' in kwargs.keys():
+        endno = kwargs['raw_data_endno']
+    else:
+        endno = int( endno )
+    
+    chopfreq     = conf['REDUCTION']['chopfreq']
+    if 'chopfreq' in kwargs.keys():
+        chopfreq = kwargs['chopfreq']
+    chopfreq = float( chopfreq )
+    
+    nodfreq      = conf['REDUCTION']['nodfreq']
+    if 'nodfreq' in kwargs.keys():
+        nodfreq = kwargs['nodfreq']
+    else:
         try:
-            chopfreq = float(chopfreq)
-        except:
-            chopfreq = None
-    if nodfreq is None:
-        nodfreq  = conf['REDUCTION']['nodfreq']
-        try:
-            nodfreq = float(nodfreq)
+            nodfreq = float( nodfreq )
         except:
             nodfreq = None
-        
+    
+    outpath      = conf['REDUCTION']['reduce_outpath']
+    if 'outpath' in kwargs.keys():
+        outpath = kwargs['outpath']
+    elif 'reduce_outpath' in kwargs.keys():
+        outpath = kwargs['reduce_outpath']
+    
+    outfile = None
+    if 'outfile' in kwargs.keys():
+        outfile = kwargs['outfile']
+    else:
+        outfile = 'chopnod_{0}_{1}.fits'.format( startno, endno )
+    
     
     
     # Debugging message checkpoint
@@ -450,6 +520,7 @@ def chopnodframe( config,
                          'CHOPNODFRAME.DEBUG           {0: >16} : {1}'.format( 'endno', endno ),
                          'CHOPNODFRAME.DEBUG           {0: >16} : {1}'.format( 'chopfreq', chopfreq ),
                          'CHOPNODFRAME.DEBUG           {0: >16} : {1}'.format( 'nodfreq', nodfreq ),
+                         'CHOPNODFRAME.DEBUG           {0: >16} : {1}'.format( 'outpath', outpath ),
                          'CHOPNODFRAME.DEBUG           {0: >16} : {1}'.format( 'outfile', outfile ),
                          'CHOPNODFRAME.DEBUG       Parameters retrieved from config file:',
                          'CHOPNODFRAME.DEBUG           {0: >16} : {1}'.format( 'save_mem', save_mem ),
@@ -513,7 +584,7 @@ def chopnodframe( config,
     
     
     # Uses write_chopnod_frame function to save the calculated data to the desired fits file
-    write_chopnod_frame( outfile, diffframe, filelist, raw_filepath = datapath, header_dict = header_dict )
+    write_chopnod_frame( os.path.join( outpath, outfile ), diffframe, filelist, raw_filepath = datapath, header_dict = header_dict )
     
     
     

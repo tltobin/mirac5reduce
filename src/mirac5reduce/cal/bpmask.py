@@ -5,14 +5,13 @@ from .. import __version__
 from astropy.io import fits
 import numpy as np
 import configparser
+import os
 
 from ..utils.statfunc import medabsdev
 
 ################## Functions ####################
 
-def make_bpmask( config, 
-                 dark_file = None, bp_threshold = None, outfile = None,
-                 logfile = None, debug = False  ):
+def make_bpmask( config, logfile = None, debug = False, **kwargs ):
     """
     Creates a bad pixel mask from an existing mean dark frame file, where pixels with mean dark value that
     deviates from the median value by more than some threshold times the M.A.D.
@@ -23,43 +22,59 @@ def make_bpmask( config,
             config          String
             
                                 The file name(s) (with paths) of the configuration file.
-            
-    Optional Parameters
-    -------------------
-            
-            dark_file       String or None
+    
+    Optional Parameters: Config File Override
+    -----------------------------------------
                                 
-                                [ Default = None ]
+            bp_threshold    Integer or float
                                 
-                                The path and file name for the mean dark file that will be used to determine
-                                the bad pixel locations.
+                                [ Default = Config file value for bp_threshold ]
                                 
-                                If set to None, will derive using values imported from the provided config 
-                                file:
-                                
-                                [calib_outpath]/dark_[raw_dark_startno]_[raw_dark_endno].fits
-            
-            bp_threshold    Float, Integer, or None
-                                
-                                [ Default = None ]
+                                Threshold defining the values at which pixels will be marked as bad.
                                 
                                 Pixels with mean dark values more than [bp_threshold] x the M.A.D. from the
                                 median pixel value in the mean dark frame will be masked in the bad pixel 
-                                mask.      
-                                                          
-                                If set to None, will use the config file value, bp_threshold.
+                                mask.
+                                
+            startno         Integer
+                                
+                                [ Default = Config file value for raw_dark_startno ]
+                                
+                                File number of the first raw dark frame (inclusive). Used only to determine
+                                default values for outfile and darkfile, below.
             
-            outfile         String or None
+            endno           Integer
                                 
-                                [ Default = None ]
+                                [ Default = Config file value for raw_dark_startno ]
                                 
-                                The path and file name where the fits file containing the created bad pixel 
-                                mask will be saved.
+                                File number of the last raw dark frame (inclusive). Used only to determine
+                                default values for outfile and darkfile, below.
+            
+            outpath         String
                                 
-                                If set to None, will derive using values imported from the provided config 
-                                file:
+                                [ Default = Config file value for calib_outpath ]
                                 
-                                [calib_outpath]/bpmask_[raw_dark_startno]_[raw_dark_endno].fits
+                                Path where the output files created by the calibration scripts are saved.
+                                Mean dark file should be located in this path. Resulting bpmask file will also 
+                                be saved to this path.
+            
+            outfile         String
+                                
+                                [ Default = bpmask_[startno]_[endno].fits ]
+                                
+                                File name used for the created bad pixel mask fits file. File is saved within 
+                                the outpath.
+            
+            dark_file       String
+                                
+                                [ Default = dark_[startno]_[endno].fits ]
+                                
+                                File name for the mean dark file that will be used to determine the bad pixel 
+                                locations. File should be located in the outpath.
+    
+    
+    Optional Parameters: Other
+    --------------------------
             
             logfile         String or None
                             
@@ -74,7 +89,7 @@ def make_bpmask( config,
                                 [ Default = False ]
                             
                                 If set to True, will print additional debugging information to the terminal.
-                            
+                                
     Config File Parameters Used
     ---------------------------
         
@@ -88,7 +103,7 @@ def make_bpmask( config,
     Output Files Generated
     ----------------------
     
-        [outfile]
+        [outpath]/[outfile]
         
                             Fits file containing (in extension 0) the generated bad pixel mask. 
                             
@@ -102,23 +117,61 @@ def make_bpmask( config,
     conf = configparser.ConfigParser()
     _ = conf.read(config)
     
-    # Parses optional keys that may have been provided to override the config values and sets any default
-    #   values
-    if dark_file is None:
-        dark_file = '{0}/dark_{1}_{2}.fits'.format( conf['CALIB']['calib_outpath'], 
-                                        conf['CALIB']['raw_dark_startno'], conf['CALIB']['raw_dark_endno'] )
-    if bp_threshold is None:
-        bp_threshold = conf['CALIB'].getfloat('bp_threshold')
-    if outfile is None:
-        outfile = '{0}/bpmask_{1}_{2}.fits'.format( conf['CALIB']['calib_outpath'], 
-                                        conf['CALIB']['raw_dark_startno'], conf['CALIB']['raw_dark_endno'] )
+    # Parses optional keys that may have been provided in **kwargs to override the config values and sets any 
+    #   default values
+    bp_threshold = conf[  'CALIB'  ]['bp_threshold']
+    if 'bp_threshold' in kwargs.keys():
+        bp_threshold = kwargs['bp_threshold']
+    else:
+        bp_threshold = float( bp_threshold )
+    
+    startno      = conf[  'CALIB'  ]['raw_dark_startno']
+    if 'startno' in kwargs.keys():
+        startno = kwargs['startno']
+    elif 'dark_startno' in kwargs.keys():
+        startno = kwargs['dark_startno']
+    elif 'raw_dark_startno' in kwargs.keys():
+        startno = kwargs['raw_dark_startno']
+    else:
+        startno = int( startno )
+    
+    endno        = conf[  'CALIB'  ]['raw_dark_endno']
+    if 'endno' in kwargs.keys():
+        endno = kwargs['endno']
+    elif 'dark_endno' in kwargs.keys():
+        endno = kwargs['dark_endno']
+    elif 'raw_dark_endno' in kwargs.keys():
+        endno = kwargs['raw_dark_endno']
+    else:
+        endno = int( endno )
+    
+    outpath      = conf[  'CALIB'  ]['calib_outpath']
+    if 'outpath' in kwargs.keys():
+        outpath = kwargs['outpath']
+    elif 'calib_outpath' in kwargs.keys():
+        outpath = kwargs['calib_outpath']
+    
+    outfile = None
+    if 'outfile' in kwargs.keys():
+        outfile = kwargs['outfile']
+    else:
+        outfile = 'bpmask_{0}_{1}.fits'.format( startno, endno )
+    
+    dark_file = None
+    if 'dark_file' in kwargs.keys():
+        dark_file = kwargs['dark_file']
+    else:
+        dark_file = 'dark_{0}_{1}.fits'.format( startno, endno )
+    
+    
     
     
     # Debugging message checkpoint
     if debug:
         feedbacklines = ['MAKE_BPMASK.DEBUG        Parameters set manually or determined from config file:',
-                         'MAKE_BPMASK.DEBUG            {0: >16} : {1}'.format( 'dark_file', dark_file ),
                          'MAKE_BPMASK.DEBUG            {0: >16} : {1}'.format( 'bp_threshold', bp_threshold ),
+                         'MAKE_BPMASK.DEBUG            {0: >16} : {1}'.format( 'outpath', outpath ),
+                         'MAKE_BPMASK.DEBUG            {0: >16} : {1}'.format( 'dark_file', dark_file ),
                          'MAKE_BPMASK.DEBUG            {0: >16} : {1}'.format( 'outfile', outfile ) ]
         for flin in feedbacklines:
             print(flin)
@@ -136,7 +189,7 @@ def make_bpmask( config,
         print('MAKE_BPMASK.DEBUG        Retrieving data from dark_file...')
     
     # Retrieves mean dark data array from the file
-    dark_data_mean = fits.getdata( dark_file, 0 )
+    dark_data_mean = fits.getdata( os.path.join( outpath, dark_file ), 0 )
     
     
     if debug:
@@ -187,7 +240,7 @@ def make_bpmask( config,
     
     # Populates header directly with general info 
     hdu.header['FILETYPE'] =   'Pixel Mask'
-    hdu.header['DARKFILE'] = ( dark_file.split('/')[-1], 'Dark file used'                            )
+    hdu.header['DARKFILE'] = ( dark_file               , 'Dark file used'                            )
     hdu.header['NFLAGGED'] = ( bpmask.sum()            , 'Total number bad pixels flagged'           )
     
     hdu.header['NSIG'    ] = ( bp_threshold            , 'Threshold x M.A.D. used (bp_threshold)'    )
@@ -200,7 +253,7 @@ def make_bpmask( config,
     
     
     # Copies some header values from the mean dark file used
-    with fits.open( dark_file ) as dark_hdu:
+    with fits.open( os.path.join( outpath, dark_file ) ) as dark_hdu:
         hdu.header['NFRAMES' ] = ( dark_hdu[0].header['NFRAMES' ], 'Number raw frames in darkfile' )
         hdu.header['FILE_STR'] = ( dark_hdu[0].header['FILE_STR'], 'First raw file in darkfile' )
         hdu.header['FILE_END'] = ( dark_hdu[0].header['FILE_END'], 'Last raw file in darkfile' )
@@ -219,7 +272,7 @@ def make_bpmask( config,
                 hdu.header[key] = dark_hdu[0].header.cards[key][1:]
     
     # Finally, write this hdu to the output file
-    hdu.writeto( outfile )
+    hdu.writeto( os.path.join( outpath, outfile ) )
     
     
     
