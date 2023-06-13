@@ -47,7 +47,7 @@ setup(
     # author_email="distutils-sig@python.org",
     
     # packages = [ 'mirac5reduce' ],
-    packages = find_packages( where='src', include=['mirac5reduce'] )
+    packages = find_packages( where='src', include=['mirac5reduce'] ),
     package_dir={'': 'src', },
     
     # Use these lines to prevent installation without specific versions of python & required subpackages
