@@ -40,11 +40,11 @@ def create_flatfield( config, logfile = None, debug = False, **kwargs ):
     Optional Parameters: Config File Override
     -----------------------------------------
             
-            datapath        String
+            raw_flat_path   String
                                 
-                                [ Default = Config file value for raw_cals_path ]
+                                [ Default = Config file value for raw_flat_path  ]
                                 
-                                The path where the raw flat frame fits files are stored.
+                                Path where the raw flat files are stored.
                                 
             startno         Integer
                                 
@@ -147,11 +147,12 @@ def create_flatfield( config, logfile = None, debug = False, **kwargs ):
         
         Sometimes used (see Optional Parameters above for more info):
             
-            [CALIB]         calib_outpath
-                            raw_dark_startno
+            [CALIB]         raw_dark_startno
                             raw_dark_endno
+                            raw_flat_path
                             raw_flat_startno
                             raw_flat_endno
+                            calib_outpath
                             
     Output Files Generated
     ----------------------
@@ -188,11 +189,11 @@ def create_flatfield( config, logfile = None, debug = False, **kwargs ):
     
     # Parses optional keys that may have been provided in **kwargs to override the config values and sets any 
     #   default values
-    datapath     = conf[  'CALIB'  ]['raw_cals_path']
-    if 'datapath' in kwargs.keys():
-        datapath = kwargs['datapath']
-    elif 'raw_cals_path' in kwargs.keys():
-        datapath = kwargs['raw_cals_path']
+    raw_flat_path= conf[  'CALIB'  ]['raw_flat_path']
+    if 'flat_path' in kwargs.keys():
+        raw_flat_path = kwargs['flat_path']
+    elif 'raw_flat_path' in kwargs.keys():
+        raw_flat_path = kwargs['raw_flat_path']
     
     startno      = conf[  'CALIB'  ]['raw_flat_startno']
     if 'startno' in kwargs.keys():
@@ -268,7 +269,7 @@ def create_flatfield( config, logfile = None, debug = False, **kwargs ):
     # Debugging message checkpoint
     if debug:
         feedbacklines = ['CREATE_FLATFIELD.DEBUG   Parameters set manually or determined from config file:',
-                         'CREATE_FLATFIELD.DEBUG       {0: >16} : {1}'.format( 'datapath', datapath ),
+                         'CREATE_FLATFIELD.DEBUG       {0: >16} : {1}'.format( 'raw_flat_path', raw_flat_path ),
                          'CREATE_FLATFIELD.DEBUG       {0: >16} : {1}'.format( 'startno', startno ),
                          'CREATE_FLATFIELD.DEBUG       {0: >16} : {1}'.format( 'endno', endno ),
                          'CREATE_FLATFIELD.DEBUG       {0: >16} : {1}'.format( 'outpath', outpath ),
@@ -297,7 +298,7 @@ def create_flatfield( config, logfile = None, debug = False, **kwargs ):
     
     
     # Retrieves the list of file names for the requested file numbers
-    filelist = get_raw_filenames( raw_name_fmt, startno, endno, datapath  )
+    filelist = get_raw_filenames( raw_name_fmt, startno, endno, raw_flat_path  )
     
     # feedback message checkpoint
     feedback_msg = 'CREATE_FLATFIELD:        File names retrieved: {0}'.format(len(filelist))
@@ -374,7 +375,7 @@ def create_flatfield( config, logfile = None, debug = False, **kwargs ):
     ##           (means we're assuming all raw frames are in their own, individual fits files)         ##
     
     # Retrieves the shape of a single 2D frame
-    with fits.open( os.path.join( datapath, filelist[0] ), mode='readonly' ) as hdulist:
+    with fits.open( os.path.join( raw_flat_path, filelist[0] ), mode='readonly' ) as hdulist:
         frame_shape = hdulist[data_ext].data.shape
     
     # Sets aside total number of frames
@@ -466,7 +467,7 @@ def create_flatfield( config, logfile = None, debug = False, **kwargs ):
         #   array with frame as the 0th axis
         chunk_frames = list()
         for j in range( file_idx_str, file_idx_end ):
-            chunk_frames.append( fits.getdata( os.path.join( datapath, filelist[j] ), data_ext, header = False ) )
+            chunk_frames.append( fits.getdata( os.path.join( raw_flat_path, filelist[j] ), data_ext, header = False ) )
         chunk_frames = np.array( chunk_frames )
         
         # Subtracts master dark from each frame
@@ -553,7 +554,7 @@ def create_flatfield( config, logfile = None, debug = False, **kwargs ):
                      'WINTRANS', 'DETPITCH', 'APERDIST', 'APERDIAM',    # some info about exposures, if wanted
                      'FRMRATE', 'INTEGRT', 'INTEGRTM',                  # frame rate and integration
                      'GAIN_SET', 'CH0POWER', 'CH1POWER', 'CH2POWER', 'CH3POWER', 'CH4POWER', 'CH5POWER' ]
-    with fits.open( os.path.join(datapath,filelist[0]), mode='readonly' ) as rawhdu:
+    with fits.open( os.path.join(raw_flat_path,filelist[0]), mode='readonly' ) as rawhdu:
         for key in keys_to_copy:
             if key in rawhdu[0].header.keys():
                 hdu.header[key] = rawhdu[0].header.cards[key][1:]

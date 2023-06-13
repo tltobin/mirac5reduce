@@ -43,11 +43,13 @@ def meanframe( config, frametype, logfile = None, debug = False, **kwargs ):
             
             datapath        String
                                 
-                                [ Default = Config file value for raw_cals_path/raw_data_path ]
+                                [ Default = Config file value for raw_(dark/flat/data)_path ]
                                 
                                 The path where the raw fits frame fits files are stored.
                                 
-                                If frametype is 'dark' or 'flat', uses config value, raw_cals_path.
+                                If frametype is 'dark', uses config value, raw_dark_path. 
+                                
+                                If frametype is 'flat', uses config value, raw_flat_path.
                                 
                                 Otherwise, uses config value, raw_data_path.
                                 
@@ -129,12 +131,13 @@ def meanframe( config, frametype, logfile = None, debug = False, **kwargs ):
                             raw_data_startno
                             raw_data_endno
             
-            [CALIB]         raw_cals_path
-                            calib_outpath
+            [CALIB]         raw_dark_path
                             raw_dark_startno
                             raw_dark_endno
+                            raw_flat_path
                             raw_flat_startno
                             raw_flat_endno
+                            calib_outpath
                             
     Output Files Generated
     ----------------------
@@ -172,11 +175,13 @@ def meanframe( config, frametype, logfile = None, debug = False, **kwargs ):
     
     if frametype in ['dark','flat']:
         
-        datapath     = conf[  'CALIB'  ]['raw_cals_path']
+        datapath     = conf[  'CALIB'  ]['raw_{0}_path'.format(frametype)]
         if 'datapath' in kwargs.keys():
             datapath = kwargs['datapath']
-        elif 'raw_cals_path' in kwargs.keys():
-            datapath = kwargs['raw_cals_path']
+        elif '{0}_path'.format(frametype) in kwargs.keys():
+            datapath = kwargs['{0}_path'.format(frametype)]
+        elif 'raw_{0}_path'.format(frametype) in kwargs.keys():
+            datapath = kwargs['raw_{0}_path'.format(frametype)]
     
         startno      = conf[  'CALIB'  ]['raw_{0}_startno'.format(frametype)]
         if 'startno' in kwargs.keys():

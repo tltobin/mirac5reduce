@@ -46,12 +46,13 @@ setup(
     # Author email - decide which email to distribute
     # author_email="distutils-sig@python.org",
     
-    packages = [ 'mirac5reduce' ],
+    # packages = [ 'mirac5reduce' ],
+    packages = find_packages( where='src', include=['mirac5reduce'] )
     package_dir={'': 'src', },
     
     # Use these lines to prevent installation without specific versions of python & required subpackages
     # python_requires=">=3.7, <4",
-    install_requires=["numpy","matplotlib","astropy"],
+    # install_requires=["numpy","matplotlib","astropy"],
     
     # Can use this to install any additional data files that need to be installed with package
     # package_data={  # Optional

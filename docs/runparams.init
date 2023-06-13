@@ -50,20 +50,23 @@ nodfreq  =
 ## when running config scripts, but should reflect the calibration files used for the reduction listed above.
 [CALIB]
 
-# Path indicating where the raw dark/flat fits files from the telescope are stored.
-raw_cals_path = 
-
-# Path where the output files created by the calibration scripts should be saved 
-#   (includes bad pixel mask and any master dark/flat frames)
-calib_outpath = 
+# Path indicating where the raw dark fits files from the telescope are stored.
+raw_dark_path = 
 
 # Start and end file numbers (inclusive) indicating the range of DARK files for this reduction
 raw_dark_startno = 
 raw_dark_endno   = 
 
+# Path indicating where the raw flat fits files from the telescope are stored.
+raw_flat_path = 
+
 # Start and end file numbers (inclusive) indicating the range of FLAT files for this reduction
 raw_flat_startno = 
 raw_flat_endno   = 
+
+# Path where the output files created by the calibration scripts should be saved 
+#   (includes bad pixel mask and any master dark/flat frames)
+calib_outpath = 
 
 # Threshold (in units of M.A.D.) used for determining bad pixels. Pixels with mean dark values more than 
 #   bp_threshold x the M.A.D. away from the median pixel value will be flagged.
