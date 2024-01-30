@@ -97,7 +97,8 @@ def get_raw_filenames( raw_name_fmt, startno, endno, raw_file_path  ):
     return filelist
 
 
-def write_mean_frame( meanfile_name, avgframe, frametype, raw_filelist, raw_filepath = None ):
+def write_mean_frame( meanfile_name, avgframe, frametype, raw_filelist, raw_filepath = None,
+                      _parent_func_ = None, _history_text_ = None ):
     """
     Saves mean frame calculated from a list of raw frames to an output fits file, populating the header with
     some calculation details and some keys copied over from the first raw fits file used to calculate it.
@@ -164,6 +165,10 @@ def write_mean_frame( meanfile_name, avgframe, frametype, raw_filelist, raw_file
     hdu.header['FILE_END'] = ( raw_filelist[-1] , 'Last raw file used' )
     hdu.header['COMBTYPE'] = ( 'MEAN'       , 'How raw frames were combined' )
     
+    # _history_text_ must either be a list or None
+    if _history_text_ is not None and not isinstance( _history_text_, list ):
+        _history_text_ = [ _history_text_ , ]
+    
     # If a raw_filepath was provided, checks first file for desired keys and copies any to header of output
     if raw_filepath is not None:
         
@@ -182,12 +187,25 @@ def write_mean_frame( meanfile_name, avgframe, frametype, raw_filelist, raw_file
                 if key in raw_ref_hdu[0].header.keys():
                     hdu.header[key] = raw_ref_hdu[0].header.cards[key][1:]
     
+    # Adds datapath key
+    hdu.header['DATAPATH'] = ( raw_filepath, 'path to raw data files' )
+    
+    
+    # If history provided, adds HISTORY cards of the header
+    if _history_text_ is not None:
+        hdu.header['HISTORY']     = 'mirac5reduce version : {0}'.format( __version__ )
+        if _parent_func_ is not None:
+            hdu.header['HISTORY'] = 'Function : {0}'.format( _parent_func_ )
+        for hist_line in _history_text_:
+            hdu.header['HISTORY'] = '    {0}'.format( hist_line )
+    
     # Finally, write this hdu to the output file
     hdu.writeto( meanfile_name )
 
 
 
-def write_chopnod_frame( outfile_name, diffframe, raw_filelist, raw_filepath = None, header_dict = None ):
+def write_chopnod_frame( outfile_name, diffframe, raw_filelist, raw_filepath = None, header_dict = None,
+                         _parent_func_ = None, _history_text_ = None ):
     """
     Saves mean chop/nod difference frame calculated from a list of raw frames to an output fits file, 
     populating the header with some calculation details and some keys copied over from the first raw fits file 
@@ -258,6 +276,10 @@ def write_chopnod_frame( outfile_name, diffframe, raw_filelist, raw_filepath = N
     hdu.header['FILE_END'] = ( raw_filelist[-1] , 'Last raw file used' )
     hdu.header['COMBTYPE'] = ( 'MEAN DIFF'      , 'How raw frames were combined' )
     
+    # _history_text_ must either be a list or None
+    if _history_text_ is not None and not isinstance( _history_text_, list ):
+        _history_text_ = [ _history_text_ , ]
+    
     # If header_dict from calc_chopnod_frame was provided, writes the contained fits header keys/values to the
     #   header
     if header_dict is not None:
@@ -282,6 +304,17 @@ def write_chopnod_frame( outfile_name, diffframe, raw_filelist, raw_filepath = N
             for key in keys_to_copy:
                 if key in raw_ref_hdu[0].header.keys():
                     hdu.header[key] = raw_ref_hdu[0].header.cards[key][1:]
+    
+    # Adds datapath key
+    hdu.header['DATAPATH'] = ( raw_filepath, 'path to raw data files' )
+    
+    # If history provided, adds HISTORY cards of the header
+    if _history_text_ is not None:
+        hdu.header['HISTORY']     = 'mirac5reduce version : {0}'.format( __version__ )
+        if _parent_func_ is not None:
+            hdu.header['HISTORY'] = 'Function : {0}'.format( _parent_func_ )
+        for hist_line in _history_text_:
+            hdu.header['HISTORY'] = '    {0}'.format( hist_line )
     
     # Finally, write this hdu to the output file
     hdu.writeto( outfile_name )

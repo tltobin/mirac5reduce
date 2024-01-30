@@ -6,6 +6,7 @@ from astropy.io import fits
 import numpy as np
 import configparser
 import os
+from datetime import datetime
 
 from ..utils.statfunc import medabsdev
 
@@ -259,6 +260,8 @@ def make_bpmask( config, logfile = None, debug = False, **kwargs ):
         hdu.header['FILE_STR'] = ( dark_hdu[0].header['FILE_STR'], 'First raw file in darkfile' )
         hdu.header['FILE_END'] = ( dark_hdu[0].header['FILE_END'], 'Last raw file in darkfile' )
         hdu.header['COMBTYPE'] = ( dark_hdu[0].header['COMBTYPE'], 'How darkfile frames were combined' )
+        if 'DATAPATH' in dark_hdu[0].header.keys():
+            hdu.header['DARKPATH'] = ( dark_hdu[0].header['DATAPATH'], 'Path to raw dark files'            )
         
         # List of header keys to copy over directly that came from the first raw dark file
         keys_to_copy = [ 'DATE', 'TIMEDAY', 'PLUS',                         # when first dark frame was taken
@@ -271,6 +274,23 @@ def make_bpmask( config, logfile = None, debug = False, **kwargs ):
         for key in keys_to_copy:
             if key in dark_hdu[0].header.keys():
                 hdu.header[key] = dark_hdu[0].header.cards[key][1:]
+        
+        # Saves history from the dark file
+        if 'HISTORY' in dark_hdu[0].header.keys():
+            dark_file_hist = list( dark_hdu[0].header['HISTORY'] )
+    
+    # Finally, write some notes to the HISTORY cards of the header
+    hdu.header['HISTORY']     = 'mirac5reduce version : {0}'.format( __version__ )
+    hdu.header['HISTORY']     = 'Function : {0}'.format( 'cal.bpmask.make_bpmask' )
+    hdu.header['HISTORY']     = '    With bp_threshold = {0} x M.A.D.'.format(bp_threshold)
+    hdu.header['HISTORY']     = '    Derived from mean dark: {0}'.format(dark_file)
+    hdu.header['HISTORY']     = '    Bad Pix Mask file created : {0}'.format( datetime.now().strftime('%Y-%m-%d %H:%M:%S') )
+    
+    hdu.header['HISTORY']     = '{0} HISTORY :'.format( dark_file )
+    for hist_line in dark_file_hist:
+        if not hist_line.startswith('mirac5reduce version :'):
+            hdu.header['HISTORY'] = '    {0}'.format(hist_line)
+    
     
     # Finally, write this hdu to the output file
     hdu.writeto( os.path.join( outpath, outfile ) )

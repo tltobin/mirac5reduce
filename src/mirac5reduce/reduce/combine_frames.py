@@ -5,6 +5,7 @@ from .. import __version__
 import os
 import numpy as np
 import configparser
+from datetime import datetime
 
 from ..utils.utils import get_raw_filenames, write_mean_frame, write_chopnod_frame
 from ..utils.calcframes import calc_mean_frame, calc_chopnod_frame
@@ -150,6 +151,8 @@ def meanframe( config, frametype, logfile = None, debug = False, **kwargs ):
                             file, as well as saving the start and end file numbers and the total number of
                             files used.
     """
+    _func_name_ = 'reduce.combine_frames.meanframe'
+    
     
     # Retrieves config file
     conf = configparser.ConfigParser()
@@ -307,11 +310,11 @@ def meanframe( config, frametype, logfile = None, debug = False, **kwargs ):
     
     # Splits here to calculate average frame from data files in memory saving mode or directly
     if save_mem:
-        avgframe = calc_mean_frame( [ os.path.join( datapath, fname ) for fname in filelist ], 
-                                  ext = data_ext, maxframes = max_frames_inmem, logfile = logfile )
+        avgframe = calc_mean_frame( filelist, datapath = datapath, ext = data_ext, 
+                                    maxframes = max_frames_inmem, logfile = logfile )
     else:
-        avgframe = calc_mean_frame( [ os.path.join( datapath, fname ) for fname in filelist ], 
-                                  ext = data_ext, maxframes = None, logfile = logfile )
+        avgframe = calc_mean_frame( filelist, datapath = datapath, ext = data_ext, 
+                                    maxframes = None, logfile = logfile )
     
 
     
@@ -323,9 +326,14 @@ def meanframe( config, frametype, logfile = None, debug = False, **kwargs ):
     else:
         print(feedback_msg)
     
+    # Creates some history text to save to the output file header
+    hist_list = [ 'Raw Data Arch : raw_name_fmt = {0}, data_ext = {1}'.format( raw_name_fmt, data_ext ),
+                  'Raw {0} files : {1} files, file numbers {2} - {3}'.format( frametype, len(filelist), startno, endno ),
+                  'Mean {0} file created : {1}'.format( frametype, datetime.now().strftime('%Y-%m-%d %H:%M:%S') )  ]
     
     # Uses write_mean_frame function to save the calculated data to the desired fits file
-    write_mean_frame( os.path.join( outpath, outfile ), avgframe, frametype, filelist, raw_filepath = datapath )
+    write_mean_frame( os.path.join( outpath, outfile ), avgframe, frametype, filelist, raw_filepath = datapath,
+                      _parent_func_ = _func_name_ , _history_text_ = hist_list )
     
 
 
@@ -440,7 +448,7 @@ def chopnodframe( config, logfile = None, debug = False, **kwargs ):
                             file, as well as saving the start and end file numbers and the total number of
                             files used.
     """
-    
+    _func_name_ = 'reduce.combine_frames.chopnodframe'
     
     
     # Retrieves config file
@@ -567,12 +575,12 @@ def chopnodframe( config, logfile = None, debug = False, **kwargs ):
     
     # Splits here to calculate average frame from data files in memory saving mode or directly
     if save_mem:
-        diffframe, header_dict = calc_chopnod_frame( [ os.path.join( datapath, fname ) for fname in filelist ],
+        diffframe, header_dict = calc_chopnod_frame(  filelist, datapath = datapath, 
                                                       chopfreq = chopfreq, nodfreq = nodfreq, 
                                                       ext = data_ext, maxframes = max_frames_inmem, logfile = logfile,
                                                       _fitsdict_ = True )
     else:
-        diffframe, header_dict = calc_chopnod_frame( [ os.path.join( datapath, fname ) for fname in filelist ], 
+        diffframe, header_dict = calc_chopnod_frame(  filelist, datapath = datapath, 
                                                       chopfreq = chopfreq, nodfreq = nodfreq, 
                                                       ext = data_ext, maxframes = None, logfile = logfile,
                                                       _fitsdict_ = True )
@@ -587,9 +595,15 @@ def chopnodframe( config, logfile = None, debug = False, **kwargs ):
     else:
         print(feedback_msg)
     
+    # Creates some history text to save to the output file header
+    hist_list = [ 'Raw Data Arch : raw_name_fmt = {0}, data_ext = {1}'.format( raw_name_fmt, data_ext ),
+                  'Raw chopnod files : {0} files, file numbers {1} - {2}'.format( len(filelist), startno, endno ),
+                  'Mean chopnod file created : {0}'.format( datetime.now().strftime('%Y-%m-%d %H:%M:%S') )  ]
+    
     
     # Uses write_chopnod_frame function to save the calculated data to the desired fits file
-    write_chopnod_frame( os.path.join( outpath, outfile ), diffframe, filelist, raw_filepath = datapath, header_dict = header_dict )
+    write_chopnod_frame( os.path.join( outpath, outfile ), diffframe, filelist, raw_filepath = datapath, header_dict = header_dict,
+                         _parent_func_ = _func_name_ , _history_text_ = hist_list )
     
     
     

@@ -6,11 +6,12 @@ import numpy as np
 from astropy.io import fits
 from math import ceil
 from collections import OrderedDict
+import os
 
 ################## Functions ####################
 
 
-def calc_mean_frame( filenames, ext = None, maxframes = 200, logfile = None ):
+def calc_mean_frame( filenames, datapath = None, ext = None, maxframes = 200, logfile = None ):
     """
     Calculates the mean frame of data read in from one or more fits files.
     
@@ -29,16 +30,26 @@ def calc_mean_frame( filenames, ext = None, maxframes = 200, logfile = None ):
     
             filenames       String or List of Strings
             
-                                The file name(s) (with paths) where the data arrays to be combined are stored.
+                                The file name(s) where the data arrays to be combined are stored.
                             
                                 If a single string is provided, assumes frames are stored in separate 
                                 extensions of that single indicated fits file.
                             
                                 If a list of strings is provided, assumes frames are stored in the extension 
                                 specified by ext for all fits files specified.
+                                
+                                File name(s) can be provided with or without paths. If optional parameter
+                                datapath is not None, all files in filenames will be assumed to be in that
+                                datapath.
     
     Optional Parameters
     -------------------
+    
+            datapath        String or None
+            
+                                [ Default = None ]
+                            
+                                The path where all of the files in filenames are stored. 
     
             ext             Int or None
             
@@ -87,7 +98,7 @@ def calc_mean_frame( filenames, ext = None, maxframes = 200, logfile = None ):
         filenames = [ filenames, ]
         
     # Retrieves the shape of a single 2D frame
-    with fits.open( filenames[0], mode='readonly' ) as hdulist:
+    with fits.open( os.path.join( datapath, filenames[0] ), mode='readonly' ) as hdulist:
         
         # If each frame in its own file, just looks at the indicated extension
         #   While we're in the if statement, also saves total number of frames to be combined and generates
@@ -183,7 +194,7 @@ def calc_mean_frame( filenames, ext = None, maxframes = 200, logfile = None ):
         #   array with frame as the 0th axis
         chunk_frames = list()
         for j in range( file_idx_str, file_idx_end ):
-            chunk_frames.append( fits.getdata( filenames[j], extlist[j], header = False ) )
+            chunk_frames.append( fits.getdata( os.path.join( datapath, filenames[j] ), extlist[j], header = False ) )
         chunk_frames = np.array( chunk_frames )
         
         # Then calculate the mean frame, weight it, and add it to the avgframe
@@ -202,7 +213,7 @@ def calc_mean_frame( filenames, ext = None, maxframes = 200, logfile = None ):
     return avgframe
             
             
-def calc_chopnod_frame( filenames, ext = None, chopfreq = None, nodfreq = None,
+def calc_chopnod_frame( filenames, datapath = None, ext = None, chopfreq = None, nodfreq = None,
                         maxframes = 200, logfile = None, _fitsdict_ = False ):
     """
     Calculates the average chop-nod difference frame of data read in from one or more fits files.
@@ -222,16 +233,26 @@ def calc_chopnod_frame( filenames, ext = None, chopfreq = None, nodfreq = None,
     
             filenames       String or List of Strings
             
-                                The file name(s) (with paths) where the data arrays to be combined are stored.
+                                The file name(s) where the data arrays to be combined are stored.
                             
                                 If a single string is provided, assumes frames are stored in separate 
                                 extensions of that single indicated fits file.
                             
                                 If a list of strings is provided, assumes frames are stored in the extension 
                                 specified by ext for all fits files specified.
+                                
+                                File name(s) can be provided with or without paths. If optional parameter
+                                datapath is not None, all files in filenames will be assumed to be in that
+                                datapath.
     
     Optional Parameters
     -------------------
+    
+            datapath        String or None
+            
+                                [ Default = None ]
+                            
+                                The path where all of the files in filenames are stored. 
     
             ext             Int or None
             
@@ -322,7 +343,7 @@ def calc_chopnod_frame( filenames, ext = None, chopfreq = None, nodfreq = None,
             filenames = [ filenames, ]
         
         # Retrieves the shape of a single 2D frame
-        with fits.open( filenames[0], mode='readonly' ) as hdulist:
+        with fits.open( os.path.join( datapath, filenames[0] ), mode='readonly' ) as hdulist:
         
             # If each frame in its own file, just looks at the indicated extension
             #   While we're in the if statement, also saves total number of frames to be combined and generates
@@ -467,7 +488,7 @@ def calc_chopnod_frame( filenames, ext = None, chopfreq = None, nodfreq = None,
             #   array with frame as the 0th axis, already multiplied by +1/-1 from framesigns array
             chunk_frames = list()
             for j in range( file_idx_str, file_idx_end ):
-                chunk_frames.append( fits.getdata( filenames[j], extlist[j], header = False ) * framesigns[j] )
+                chunk_frames.append( fits.getdata( os.path.join(datapath, filenames[j]), extlist[j], header = False ) * framesigns[j] )
             chunk_frames = np.array( chunk_frames )
         
             # Then calculate the mean frame, weight it, and add it to the avgframe
@@ -497,7 +518,7 @@ def calc_chopnod_frame( filenames, ext = None, chopfreq = None, nodfreq = None,
         else:
             for i in range(len(feedbacklines)):
                 print( feedbacklines[i] )
-        diffframe = calc_mean_frame( filenames, ext = ext, maxframes = maxframes, logfile = logfile )
+        diffframe = calc_mean_frame( filenames, datapath = datapath, ext = ext, maxframes = maxframes, logfile = logfile )
     
     
     
@@ -509,7 +530,8 @@ def calc_chopnod_frame( filenames, ext = None, chopfreq = None, nodfreq = None,
                                     'NODFREQ'    : ( nodfreq            , 'nod frequency (Hz)'                     ),
                                     'NODFRAM'    : ( nod_pos_frames     , 'frames per nod position'                ),
                                     'NODCYCL'    : ( Nnodcycles         , 'number of nod (12) cycles'              ),
-                                    'CSPERNOD'   : ( Nchopcyc_per_nodpos, 'number of chop cycles per nod position' )
+                                    'CSPERNOD'   : ( Nchopcyc_per_nodpos, 'number of chop cycles per nod position' ),
+                                    'DATAPATH'   : ( datapath           , 'path to raw data files'                 )
                                     })
         return diffframe, header_dict
     

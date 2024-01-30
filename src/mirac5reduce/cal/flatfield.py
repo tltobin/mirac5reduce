@@ -522,15 +522,18 @@ def create_flatfield( config, logfile = None, debug = False, **kwargs ):
     hdu.header['NFRAMES' ] = ( len(filelist)           , 'Number raw flat frames used' )
     hdu.header['FILE_STR'] = ( filelist[0]             , 'First raw flat file used'    )
     hdu.header['FILE_END'] = ( filelist[-1]            , 'Last raw flat file used'     )
-    hdu.header['DARKFILE'] = ( dark_file               , 'Dark file used' )
+    hdu.header['FLATPATH'] = ( raw_flat_path           , 'Path to raw flat files'      )
+    hdu.header['DARKFILE'] = ( dark_file               , 'Dark file used'              )
     
     
     # Copies some header values from the mean dark file used
     with fits.open( os.path.join( outpath, dark_file ) ) as dark_hdu:
-        hdu.header['DKFRAMES'] = ( dark_hdu[0].header['NFRAMES' ], 'Number raw frames in darkfile' )
-        hdu.header['DK_STR'  ] = ( dark_hdu[0].header['FILE_STR'], 'First raw file in darkfile' )
-        hdu.header['DK_END'  ] = ( dark_hdu[0].header['FILE_END'], 'Last raw file in darkfile' )
+        hdu.header['DKFRAMES'] = ( dark_hdu[0].header['NFRAMES' ], 'Number raw frames in darkfile'     )
+        hdu.header['DK_STR'  ] = ( dark_hdu[0].header['FILE_STR'], 'First raw file in darkfile'        )
+        hdu.header['DK_END'  ] = ( dark_hdu[0].header['FILE_END'], 'Last raw file in darkfile'         )
         hdu.header['DK_COMB' ] = ( dark_hdu[0].header['COMBTYPE'], 'How darkfile frames were combined' )
+        if 'DATAPATH' in dark_hdu[0].header.keys():
+            hdu.header['DARKPATH'] = ( dark_hdu[0].header['DATAPATH'], 'Path to raw dark files'            )
     
     # Copies some header keys from the bad pixel file, if one was used
     if bpmask_file is not None:
@@ -539,6 +542,8 @@ def create_flatfield( config, logfile = None, debug = False, **kwargs ):
             hdu.header['MASKDARK'] = ( bpmask_hdu[0].header['DARKFILE' ], 'Dark file used to create bpmask'       )
             hdu.header['MASKNPIX'] = ( bpmask_hdu[0].header['NFLAGGED' ], 'Total number of pix flagged in bpmask' )
             hdu.header['MASKNSIG'] = ( bpmask_hdu[0].header['NSIG'     ], 'bp_threshold used to make bpmask'      )
+            if 'DARKPATH' in bpmask_hdu[0].header.keys():
+                hdu.header['BPDKPATH'] = ( bpmask_hdu[0].header['DARKPATH'], 'Path to raw dark files used for bpmask' )
     # If no bad pix file used, adds keys but empty
     else:
         hdu.header['MASKFILE'] = ( None, 'Bad pix mask file used' )
